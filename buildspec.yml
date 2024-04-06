@@ -2,9 +2,9 @@ version: 0.2
 
 env:
   variables:
-    API_ID: "hpxw6qg7d5crjlsbpm6ge6x6au"
+    API_ID: "dflv6my24vfvle6ruyi3rckxse"
     GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
-    API_NAME: "AppSyncCommercial"  # Replace this with your API name
+    API_NAME: "AppSyncCommercial" 
 
 phases:
   pre_build:
