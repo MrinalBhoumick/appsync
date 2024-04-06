@@ -23,7 +23,6 @@ phases:
         aws appsync update-graphql-api \
           --api-id $API_ID \
           --name "$API_NAME" \
-          --definition "data:text/plain;base64,$SCHEMA_BASE64"
 
   post_build:
     commands:
