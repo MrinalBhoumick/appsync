@@ -5,7 +5,6 @@ env:
     API_ID: "dflv6my24vfvle6ruyi3rckxse"
     GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
     API_NAME: "AppSyncCommercial"
-
 phases:
   pre_build:
     commands:
@@ -21,8 +20,9 @@ phases:
           --definition "data:text/plain;base64,$SCHEMA_BASE64"
       - |
         sleep 10  # Adjust sleep time if needed
-        aws appsync create-graphql-schema \
+        aws appsync update-graphql-api \
           --api-id $API_ID \
+          --name "$API_NAME" \
           --definition "data:text/plain;base64,$SCHEMA_BASE64"
 
   post_build:
