@@ -1,15 +1,20 @@
 version: 0.2
 
+env:
+  variables:
+    API_ID: "hpxw6qg7d5crjlsbpm6ge6x6au"
+    GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
+
 phases:
   pre_build:
     commands:
       - echo "Starting schema creation for AppSync API"
-      - curl -o schema.graphql https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql
+      - curl -o schema.graphql $GITHUB_REPO_URL
 
   build:
     commands:
       - SCHEMA_DEFINITION=$(< schema.graphql)
-      - aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition "$SCHEMA_DEFINITION"
+      - aws appsync start-schema-creation --api-id $API_ID --definition "$SCHEMA_DEFINITION"
 
   post_build:
     commands:
