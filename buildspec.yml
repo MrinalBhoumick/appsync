@@ -4,11 +4,11 @@ phases:
   pre_build:
     commands:
       - echo "Starting schema creation for AppSync API"
-      - wget https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql -O data.graphql
+      - curl -o schema.graphql https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql
 
   build:
     commands:
-      - SCHEMA_DEFINITION=$(cat data.graphql)
+      - SCHEMA_DEFINITION=$(< schema.graphql)
       - aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition "$SCHEMA_DEFINITION"
 
   post_build:
