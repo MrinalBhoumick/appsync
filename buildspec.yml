@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+  pre_build:
+    commands:
+      - echo "Starting schema creation for AppSync API"
+  build:
+    commands:
+      - aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql
+  post_build:
+    commands:
+      - echo "Schema creation initiated successfully"
