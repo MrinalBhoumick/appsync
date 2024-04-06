@@ -16,9 +16,13 @@ phases:
     commands:
       - SCHEMA_DEFINITION=$(< schema.graphql)
       - |
-        aws appsync update-graphql-api \
+        aws appsync start-schema-creation \
           --api-id $API_ID \
-          --name "$API_NAME" \
+          --definition file://schema.graphql
+      - |
+        sleep 5
+        aws appsync create-graphql-schema \
+          --api-id $API_ID \
           --definition "$SCHEMA_DEFINITION"
 
   post_build:
