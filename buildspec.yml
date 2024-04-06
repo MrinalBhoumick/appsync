@@ -1,4 +1,5 @@
 version: 0.2
+
 phases:
   pre_build:
     commands:
@@ -7,9 +8,8 @@ phases:
 
   build:
     commands:
-      - |
-        SCHEMA_DEFINITION=$(cat data.graphql)
-        aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition "$SCHEMA_DEFINITION"
+      - SCHEMA_DEFINITION=$(cat data.graphql)
+      - aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition "$SCHEMA_DEFINITION"
 
   post_build:
     commands:
