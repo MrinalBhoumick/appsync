@@ -14,16 +14,16 @@ phases:
 
   build:
     commands:
-      - SCHEMA_DEFINITION=$(< schema.graphql)
+      - SCHEMA_BASE64=$(base64 -w 0 schema.graphql)
       - |
         aws appsync start-schema-creation \
           --api-id $API_ID \
-          --definition file://schema.graphql
+          --definition "data:text/plain;base64,$SCHEMA_BASE64"
       - |
-        sleep 5
+        sleep 10  # Adjust sleep time if needed
         aws appsync create-graphql-schema \
           --api-id $API_ID \
-          --definition "$SCHEMA_DEFINITION"
+          --definition "data:text/plain;base64,$SCHEMA_BASE64"
 
   post_build:
     commands:
