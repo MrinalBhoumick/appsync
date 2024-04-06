@@ -14,8 +14,8 @@ phases:
   build:
     commands:
       - SCHEMA_DEFINITION=$(< schema.graphql)
-      - aws appsync start-schema-creation --api-id $API_ID --definition "$SCHEMA_DEFINITION"
+      - aws appsync update-graphql-api --api-id $API_ID --definition "$SCHEMA_DEFINITION"
 
   post_build:
     commands:
-      - echo "Schema creation initiated successfully"
+      - echo "Schema update initiated successfully"
