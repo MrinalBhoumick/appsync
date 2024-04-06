@@ -5,6 +5,7 @@ env:
     API_ID: "dflv6my24vfvle6ruyi3rckxse"
     GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
     API_NAME: "AppSyncCommercial"
+    AUTHENTICATION_TYPE: "API_KEY"
 phases:
   pre_build:
     commands:
@@ -23,6 +24,7 @@ phases:
         aws appsync update-graphql-api \
           --api-id $API_ID \
           --name "$API_NAME" \
+          --authentication-type $AUTHENTICATION_TYPE
 
   post_build:
     commands:
