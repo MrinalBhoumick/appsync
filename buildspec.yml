@@ -4,7 +4,7 @@ env:
   variables:
     API_ID: "dflv6my24vfvle6ruyi3rckxse"
     GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
-    API_NAME: "AppSyncCommercial" 
+    API_NAME: "AppSyncCommercial"
 
 phases:
   pre_build:
@@ -15,7 +15,11 @@ phases:
   build:
     commands:
       - SCHEMA_DEFINITION=$(< schema.graphql)
-      - aws appsync update-graphql-api --api-id $API_ID --name "$API_NAME" --cli-input-json '{ "definition": "'"$SCHEMA_DEFINITION"'" }'
+      - |
+        aws appsync update-graphql-api \
+          --api-id $API_ID \
+          --name "$API_NAME" \
+          --cli-input-json '{ "definition": "'"$SCHEMA_DEFINITION"'" }'
 
   post_build:
     commands:
