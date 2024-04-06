@@ -1,16 +1,16 @@
 version: 0.2
-
 phases:
-  install:
-    runtime-versions:
-      python: 3.9
   pre_build:
     commands:
       - echo "Starting schema creation for AppSync API"
-      - wget https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql -O local-schema.graphql
+      - wget https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql -O data.graphql
+
   build:
     commands:
-      - aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition file://local-schema.graphql
+      - |
+        SCHEMA_DEFINITION=$(cat data.graphql)
+        aws appsync start-schema-creation --api-id hpxw6qg7d5crjlsbpm6ge6x6au --definition "$SCHEMA_DEFINITION"
+
   post_build:
     commands:
       - echo "Schema creation initiated successfully"
