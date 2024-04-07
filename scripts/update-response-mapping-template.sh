@@ -1,14 +1,8 @@
 #!/bin/bash
-
-# Set your API ID
-API_ID="your_api_id_here"
-
-# Set the response mapping template file
 RESPONSE_TEMPLATE_FILE="response.vtl"
-
 # List all resolvers
-RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID")
 
+RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID"
 # Extract resolver names and type names
 RESOLVER_NAMES=$(echo "$RESOLVERS" | jq -r '.resolvers[] | .fieldName')
 TYPE_NAMES=$(echo "$RESOLVERS" | jq -r '.resolvers[] | .typeName')
