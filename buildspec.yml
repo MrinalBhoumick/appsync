@@ -2,8 +2,8 @@ version: 0.2
 phases:
   build:
     commands:
-      # - apt-get update
-      # - apt-get install -y jq
+      - apt-get update
+      - apt-get install -y jq
       - sh scripts/start-schema.sh
       - sh scripts/update-request-mapping-template.sh
-      # - sh scripts/update-respone-mapping-template.sh
+      - sh scripts/update-respone-mapping-template.sh
