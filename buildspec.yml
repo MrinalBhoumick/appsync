@@ -2,6 +2,6 @@ version: 0.2
 phases:
   build:
     commands:
-      - sh scripts/start-schema.sh
-      # - sh scripts/udpate-request-mapping-template.sh
+      # - sh scripts/start-schema.sh
+      - sh scripts/udpate-request-mapping-template.sh
       # - sh scripts/update-respone-mapping-template.sh
