@@ -4,7 +4,7 @@
 SCHEMA=$(aws appsync get-introspection-schema --api-id "$API_ID" --format SDL)
 
 # Extract resolver type name
-RESOLVER_TYPE_NAME=$(echo "$SCHEMA" | grep -oP 'type \K\w+' | grep ResolverType)
+RESOLVER_TYPE_NAME=$(echo "$SCHEMA" | grep -oP 'type \K\w+' | grep ResolverType | head -n 1)
 
 # List all resolvers of the resolver type
 RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --type-name "$RESOLVER_TYPE_NAME")
