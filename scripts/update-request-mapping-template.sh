@@ -1,9 +1,12 @@
 #!/bin/bash
-# List all resolvers
-RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --type-name "YourTypeName")
+
+# List all types from the schema
+TYPES=$(aws appsync list-types --api-id "$API_ID")
+
 # Extract resolver names and type names
-RESOLVER_NAMES=$(echo "$RESOLVERS" | jq -r '.resolvers[] | .fieldName')
-TYPE_NAMES=$(echo "$RESOLVERS" | jq -r '.resolvers[] | .typeName')
+RESOLVER_NAMES=$(echo "$TYPES" | jq -r '.types[] | select(.definition.startsWith("type ResolverType")) | .name')
+TYPE_NAMES=$(echo "$TYPES" | jq -r '.types[] | select(.definition.startsWith("type ResolverType")) | .name')
+
 # Loop over resolver names and update request mapping template
 while read -r RESOLVER_NAME && read -r TYPE_NAME <&3; do
   if aws appsync update-resolver --api-id "$API_ID" --type-name "$TYPE_NAME" --field-name "$RESOLVER_NAME" --request-mapping-template file://"$REQUEST_TEMPLATE_FILE"; then
