@@ -1,31 +1,7 @@
 version: 0.2
-
-env:
-  variables:
-    API_ID: "dflv6my24vfvle6ruyi3rckxse"
-    GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
-    API_NAME: "AppSyncCommercial"
-    AUTHENTICATION_TYPE: "API_KEY"
 phases:
-  pre_build:
-    commands:
-      - echo "Starting schema creation for AppSync API"
-      - curl -o schema.graphql $GITHUB_REPO_URL
-
   build:
     commands:
-      - SCHEMA_BASE64=$(base64 -w 0 schema.graphql)
-      - |
-        aws appsync start-schema-creation \
-          --api-id $API_ID \
-          --definition "data:text/plain;base64,$SCHEMA_BASE64"
-      - |
-        sleep 10  # Adjust sleep time if needed
-        aws appsync update-graphql-api \
-          --api-id $API_ID \
-          --name "$API_NAME" \
-          --authentication-type $AUTHENTICATION_TYPE
-
-  post_build:
-    commands:
-      - echo "Schema update initiated successfully"
+      - sh scripts/start-schema.sh
+      # - sh scripts/udpate-request-mapping-template.sh
+      # - sh scripts/update-respone-mapping-template.sh
