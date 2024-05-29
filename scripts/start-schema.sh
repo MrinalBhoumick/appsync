@@ -7,7 +7,7 @@ SCHEMA_FILE="templates/data.graphql"
 echo "Starting schema creation for AppSync API with API ID $API_ID"
 
 # Update the schema for the AppSync API
-if aws appsync update-graphql-schema --api-id "$API_ID" --definition "file://$SCHEMA_FILE"; then
+if aws appsync update-graphql-api --api-id "$API_ID" --definition "file://$SCHEMA_FILE"; then
     echo "Schema updated successfully."
 else
     echo "Failed to update schema."
