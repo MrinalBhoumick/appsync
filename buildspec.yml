@@ -4,6 +4,6 @@ phases:
     commands:
       - apt-get update
       - apt-get install -y jq
-      - sh scripts/start-schema.sh
+      - bash scripts/start-schema.sh
       - sh scripts/update-request-mapping-template.sh
       - sh scripts/update-response-mapping-template.sh
