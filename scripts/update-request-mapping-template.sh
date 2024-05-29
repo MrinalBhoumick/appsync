@@ -1,22 +1,28 @@
 #!/bin/bash
 
-# Fetch the schema definition
-SCHEMA=$(aws appsync get-introspection-schema --api-id "$API_ID" --format SDL)
+# Make sure API_ID is set before running this script
+# Set the path to the request mapping template file
+REQUEST_TEMPLATE_FILE="templates/request_mapping_template.graphql"
 
-# Extract resolver type name
-RESOLVER_TYPE_NAME=$(echo "$SCHEMA" | grep -oP 'type \K\w+' | grep ResolverType)
+echo "Updating request mapping templates for resolvers in AppSync API with API ID $API_ID"
 
-# List all resolvers of the resolver type
-RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --type-name "$RESOLVER_TYPE_NAME")
-RESOLVER_NAMES=$(echo "$RESOLVERS" | jq -r '.resolvers[].fieldName')
+# Fetch all resolvers and their types
+RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --query 'resolvers[*].[fieldName,typeName]' --output json)
 
-# Loop over resolver names and update request mapping template
-for RESOLVER_NAME in $RESOLVER_NAMES; do
-  if aws appsync update-resolver --api-id "$API_ID" --type-name "$RESOLVER_TYPE_NAME" --field-name "$RESOLVER_NAME" --request-mapping-template "file://$REQUEST_TEMPLATE_FILE"; then
-    echo "Updated request mapping template for resolver $RESOLVER_NAME of type $RESOLVER_TYPE_NAME."
-  else
-    echo "Failed to update request mapping template for resolver $RESOLVER_NAME of type $RESOLVER_TYPE_NAME."
-  fi
+# Loop over each resolver and update the request mapping template
+for row in $(echo "${RESOLVERS}" | jq -r '.[] | @base64'); do
+    _jq() {
+        echo "${row}" | base64 --decode | jq -r "${1}"
+    }
+
+    RESOLVER_NAME=$(_jq '.[0]')
+    TYPE_NAME=$(_jq '.[1]')
+
+    if aws appsync update-resolver --api-id "$API_ID" --type-name "$TYPE_NAME" --field-name "$RESOLVER_NAME" --request-mapping-template "file://$REQUEST_TEMPLATE_FILE"; then
+        echo "Updated request mapping template for resolver $RESOLVER_NAME of type $TYPE_NAME."
+    else
+        echo "Failed to update request mapping template for resolver $RESOLVER_NAME of type $TYPE_NAME."
+    fi
 done
 
 echo "Completed updating request mapping templates."

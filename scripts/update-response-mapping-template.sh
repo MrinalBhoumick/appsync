@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# Define the response mapping template file
-RESPONSE_TEMPLATE_FILE="response.vtl"
+# Make sure API_ID is set before running this script
+# Set the path to the response mapping template file
+RESPONSE_TEMPLATE_FILE="templates/response_mapping_template.graphql"
 
-# Create the response mapping template file if it doesn't exist
-if [ ! -f "$RESPONSE_TEMPLATE_FILE" ]; then
-    echo '#if( $context.result && $context.result.error )
-    $util.error($context.result.error.message)
-#else
-    $util.toJson($context.result)
-#end' > "$RESPONSE_TEMPLATE_FILE"
-fi
+echo "Updating response mapping templates for resolvers in AppSync API with API ID $API_ID"
 
 # Fetch all resolvers and their types
 RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --query 'resolvers[*].[fieldName,typeName]' --output json)
