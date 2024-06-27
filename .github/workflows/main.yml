@@ -6,8 +6,12 @@ on:
       - main
 
 jobs:
-  update-request-mapping:
+  deploy-schema:
     runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout repository
