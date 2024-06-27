@@ -11,7 +11,7 @@ RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --query 'resolvers[*].
 
 # Check if RESOLVERS is empty
 if [ -z "$RESOLVERS" ]; then
-    echo "No resolvers found."
+    echo "No resolvers found for API ID $API_ID."
     exit 1
 fi
 
