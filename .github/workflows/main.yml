@@ -40,7 +40,11 @@ jobs:
     - name: Install AWS CLI
       run: |
           sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
-
+    
+    - name: Base64 encode GraphQL schema
+      run: |
+            base64 -w 0 templates/data.graphql > data.graphql.base64      
+    
     - name: Update AppSync Schema
       run: |
-          aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition file://templates/data.graphql
+          aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition file://templates/data.graphql.base64
