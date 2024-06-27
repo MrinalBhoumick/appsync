@@ -49,7 +49,8 @@ jobs:
 
       - name: Update AppSync Schema
         run: |
-            aws appsync update-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --name "AppSync-Commercial" --definition "fileb://$GITHUB_WORKSPACE/data.graphql.base64" --authentication-type API_KEY
+            aws appsync update-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --name "AppSync-Commercial" --definition fileb://$GITHUB_WORKSPACE/data.graphql.base64 --authentication-type API_KEY
+
   
       - name: Wait for schema update to complete
         run: |
