@@ -5,7 +5,7 @@
 echo "Starting schema creation for AppSync API with API ID $API_ID"
 
 # Fetch the GraphQL schema file from GitHub
-if curl -o schema.graphql "$GITHUB_REPO_URL/templates/data.graphql"; then
+if curl -o schema.graphql "$GITHUB_REPO_URL"; then
     echo "Schema file downloaded successfully."
 else
     echo "Failed to download the schema file."
