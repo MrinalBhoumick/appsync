@@ -14,6 +14,9 @@ if [ -z "$RESOLVERS" ]; then
     exit 1
 fi
 
+echo "Fetched resolvers:"
+echo "$RESOLVERS"
+
 # Loop over each resolver and update the request mapping template
 for row in $(echo "${RESOLVERS}" | jq -r '.[] | @base64'); do
     _jq() {
