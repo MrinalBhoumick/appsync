@@ -8,7 +8,7 @@ on:
 jobs:
   deploy-schema:
     runs-on: ubuntu-latest
-
+    
     permissions:
       id-token: write
       contents: read
@@ -30,17 +30,14 @@ jobs:
           sudo apt-get install python3-pip -y
           pip3 install boto3 jq
 
-      - name: Base64 encode GraphQL schema
-        run: |
-          base64 -w 0 $GITHUB_WORKSPACE/templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
-
       - name: Make start-schema.sh executable
         run: chmod +x $GITHUB_WORKSPACE/scripts/start-schema.sh
 
       - name: Deploy AppSync Schema
-        run: $GITHUB_WORKSPACE/scripts/start-schema.sh
-        env:
-          API_ID: 6o2znoypyjdthf6vdtf6rhwnz4
-          API_NAME: "AppSync-Commercial"  
-          AUTHENTICATION_TYPE: "API_KEY"  
-          GITHUB_REPO_URL: "https://raw.githubusercontent.com/MrinalBhoumick/appsync/main/templates/data.graphql"
+        run: |
+          export GITHUB_REPOSITORY=MrinalBhoumick/appsync
+          export GITHUB_BRANCH=main
+          export API_ID=6o2znoypyjdthf6vdtf6rhwnz4
+          export API_NAME=AppSync-Commercial 
+          export AUTHENTICATION_TYPE="API_KEY"
+          $GITHUB_WORKSPACE/scripts/start-schema.sh
