@@ -41,3 +41,22 @@ jobs:
           export API_NAME=AppSync-Commercial 
           export AUTHENTICATION_TYPE="API_KEY"
           $GITHUB_WORKSPACE/scripts/start-schema.sh
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Update Request Mapping Templates
+        run: |
+          chmod +x $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
+          $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
+        env:
+          API_ID: 6o2znoypyjdthf6vdtf6rhwnz4
+
+      - name: Update Response Mapping Templates
+        run: |
+          chmod +x $GITHUB_WORKSPACE/scripts/update-response-mapping-template.sh
+          $GITHUB_WORKSPACE/scripts/update-response-mapping-template.sh
+        env:
+          API_ID: 6o2znoypyjdthf6vdtf6rhwnz4
