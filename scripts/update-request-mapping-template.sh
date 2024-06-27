@@ -9,6 +9,12 @@ echo "Updating request mapping templates for resolvers in AppSync API with API I
 # Fetch all resolvers and their types
 RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --query 'resolvers[*].[fieldName,typeName]' --output json)
 
+# Check if RESOLVERS is empty
+if [ -z "$RESOLVERS" ]; then
+    echo "No resolvers found."
+    exit 1
+fi
+
 # Loop over each resolver and update the request mapping template
 for row in $(echo "${RESOLVERS}" | jq -r '.[] | @base64'); do
     _jq() {
