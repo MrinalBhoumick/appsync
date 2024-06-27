@@ -33,28 +33,18 @@ jobs:
       - name: Make start-schema.sh executable
         run: chmod +x $GITHUB_WORKSPACE/scripts/start-schema.sh
 
+      - name: Base64 encode GraphQL schema
+        run: |
+          base64 -w 0 $GITHUB_WORKSPACE/templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
+
       - name: Deploy AppSync Schema
         run: |
-          export GITHUB_REPOSITORY=MrinalBhoumick/appsync
-          export GITHUB_BRANCH=main
           export API_ID=6o2znoypyjdthf6vdtf6rhwnz4
           export API_NAME=AppSync-Commercial 
           export AUTHENTICATION_TYPE="API_KEY"
-          $GITHUB_WORKSPACE/scripts/start-schema.sh
+          aws appsync update-graphql-api --api-id $API_ID --name "$API_NAME" --definition "fileb://$GITHUB_WORKSPACE/data.graphql.base64" --authentication-type $AUTHENTICATION_TYPE
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Update GraphQL Schema in AppSync
-        run: |
-            aws appsync update-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --name "AppSync-Commercial" --definition "$(cat $GITHUB_WORKSPACE/data.graphql.base64)" --authentication-type API_KEY
-        env:
-            GITHUB_WORKSPACE: $GITHUB_WORKSPACE
-
-  
       - name: Wait for schema update to complete
         run: |
-            sleep 10  # Adjust sleep duration as needed
-            aws appsync get-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4  
+          sleep 10  # Adjust sleep duration as needed
+          aws appsync get-graphql-api --api-id $API_ID 
