@@ -16,7 +16,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role
+        role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role  #Role to Assume
         aws-region: ap-south-1
 
     - name: Install AWS CLI
