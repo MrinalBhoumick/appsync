@@ -47,16 +47,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
-      - name: Update Request Mapping Templates
+      - name: Update AppSync Schema
         run: |
-          chmod +x $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
-          $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
-        env:
-          API_ID: 6o2znoypyjdthf6vdtf6rhwnz4
-
-      - name: Update Response Mapping Templates
+            aws appsync update-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --name "AppSync-Commercial" --definition "fileb://$GITHUB_WORKSPACE/data.graphql.base64"
+  
+      - name: Wait for schema update to complete
         run: |
-          chmod +x $GITHUB_WORKSPACE/scripts/update-response-mapping-template.sh
-          $GITHUB_WORKSPACE/scripts/update-response-mapping-template.sh
-        env:
-          API_ID: 6o2znoypyjdthf6vdtf6rhwnz4
+            sleep 10  # Adjust sleep duration as needed
+            aws appsync get-graphql-api --api-id 6o2znoypyjdthf6vdtf6rhwnz4  # Check status, handle completion logic as needed
