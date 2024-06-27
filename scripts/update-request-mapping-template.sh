@@ -1,36 +1,22 @@
 #!/bin/bash
 
-# Ensure API_ID is set before running this script
-# Set the path to the request mapping template file
-REQUEST_TEMPLATE_FILE="templates/request_mapping.graphql"
+API_ID="6o2znoypyjdthf6vdtf6rhwnz4"  # Replace with your actual API ID
+AWS_REGION="ap-south-1"  # Replace with your AWS region
 
-echo "Updating request mapping templates for resolvers in AppSync API with API ID $API_ID"
+# Check if there are any resolvers to update
+resolver_count=$(aws appsync list-resolvers --api-id $API_ID --query "length(resolvers)" --output text --region $AWS_REGION)
 
-# Fetch all resolvers and their types
-RESOLVERS=$(aws appsync list-resolvers --api-id "$API_ID" --query 'resolvers[*].[fieldName,typeName]' --output json)
-
-# Check if RESOLVERS is empty
-if [ -z "$RESOLVERS" ]; then
+if [ $resolver_count -eq 0 ]; then
     echo "No resolvers found for API ID $API_ID."
-    exit 1
+    exit 0  # Exit gracefully as there's nothing to update
 fi
 
-# Loop over each resolver and update the request mapping template
-for row in $(echo "${RESOLVERS}" | jq -r '.[] | @base64'); do
-    _jq() {
-        echo "${row}" | base64 --decode | jq -r "${1}"
-    }
+# Iterate over each resolver and update the request mapping template
+resolvers=$(aws appsync list-resolvers --api-id $API_ID --query "resolvers[*].typeName" --output text --region $AWS_REGION)
 
-    RESOLVER_NAME=$(_jq '.[0]')
-    TYPE_NAME=$(_jq '.[1]')
-
-    echo "Updating resolver: $RESOLVER_NAME of type $TYPE_NAME"
-
-    if aws appsync update-resolver --api-id "$API_ID" --type-name "$TYPE_NAME" --field-name "$RESOLVER_NAME" --request-mapping-template "file://$REQUEST_TEMPLATE_FILE"; then
-        echo "Updated request mapping template for resolver $RESOLVER_NAME of type $TYPE_NAME."
-    else
-        echo "Failed to update request mapping template for resolver $RESOLVER_NAME of type $TYPE_NAME."
-    fi
+for resolver in $resolvers; do
+    echo "Updating request mapping template for resolver: $resolver"
+    aws appsync update-resolver --api-id $API_ID --type-name $resolver --field-name <FIELD_NAME> --request-mapping-template file://$GITHUB_WORKSPACE/templates/request-mapping-template.graphql --region $AWS_REGION
 done
 
-echo "Completed updating request mapping templates."
+echo "Request mapping templates updated successfully for all resolvers."
