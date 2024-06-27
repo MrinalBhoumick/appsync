@@ -41,27 +41,16 @@ jobs:
       run: |
           sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
     
-          - name: Update AppSync Schema
-          id: update-schema
-          run: |
-            result=$(aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition fileb://$GITHUB_WORKSPACE/data.graphql.base64)
-            echo "::set-output name=status::$(echo $result | jq -r '.status')"
-      
-    - name: Wait for schema creation to complete
+    - name: Base64 encode GraphQL schema
       run: |
-            status=""
-            while [[ "$status" != "SUCCESS" && "$status" != "FAILED" ]]; do
-              sleep 10
-              status=$(aws appsync get-schema-creation-status --api-id 6o2znoypyjdthf6vdtf6rhwnz4 | jq -r '.status')
-              echo "Current status: $status"
-            done
-            echo "Schema creation status: $status"
+            base64 -w 0 templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
+      env:
+            GITHUB_WORKSPACE: ${{ github.workspace }}
   
-    - name: Check schema creation result
+    - name: Verify file content
       run: |
-            if [[ "$status" == "SUCCESS" ]]; then
-              echo "Schema creation completed successfully."
-            else
-              echo "Schema creation failed or timed out."
-              exit 1
-            fi
+            cat $GITHUB_WORKSPACE/data.graphql.base64
+  
+    - name: Update AppSync Schema
+      run: |
+            aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition fileb://$GITHUB_WORKSPACE/data.graphql.base64
