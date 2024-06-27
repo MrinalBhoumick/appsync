@@ -2,7 +2,7 @@
 
 # Make sure API_ID is set before running this script
 # Set the path to the response mapping template file
-RESPONSE_TEMPLATE_FILE="templates/response_mapping_template.graphql"
+RESPONSE_TEMPLATE_FILE="templates/response_mapping.graphql"
 
 echo "Updating response mapping templates for resolvers in AppSync API with API ID $API_ID"
 
