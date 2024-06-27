@@ -1,57 +1,39 @@
-
-name: Update AppSync Schema
+name: Deploy AppSync Schema
 
 on:
   push:
     branches:
-      - main # Or your default branch
+      - main
 
 jobs:
-  update-schema:
+  deploy-schema:
     runs-on: ubuntu-latest
-
+    
     permissions:
       id-token: write
       contents: read
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role
-        aws-region: ap-south-1
-        role-session-name: GitHubActions
-    
-    - name: Download AWS CLI v2
-      run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      
-    - name: Install unzip
-      run: |
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role
+          aws-region: ap-south-1
+          role-session-name: GitHubActions
+
+      - name: Install Python and dependencies
+        run: |
           sudo apt-get update
-          sudo apt-get install unzip -y
-      
-    - name: Unzip AWS CLI v2
-      run: |
-          unzip awscliv2.zip
-          
-    - name: Install AWS CLI
-      run: |
-          sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
-    
-    - name: Base64 encode GraphQL schema
-      run: |
-            base64 -w 0 templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
-      env:
-            GITHUB_WORKSPACE: ${{ github.workspace }}
-  
-    - name: Verify file content
-      run: |
-            cat $GITHUB_WORKSPACE/data.graphql.base64
-  
-    - name: Update AppSync Schema
-      run: |
-            aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition fileb://$GITHUB_WORKSPACE/data.graphql.base64
+          sudo apt-get install python3-pip -y
+          pip3 install boto3
+
+      - name: Base64 encode GraphQL schema
+        run: |
+          base64 -w 0 data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
+
+      - name: Deploy AppSync Schema
+        run: |
+          python3 appsync-schema-uploader deploy --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --schema-file $GITHUB_WORKSPACE/data.graphql.base64 --env dev
