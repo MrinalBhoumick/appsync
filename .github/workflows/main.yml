@@ -1,4 +1,4 @@
-name: Deploy AppSync Schema
+name: Update Request Mapping Templates
 
 on:
   push:
@@ -6,12 +6,8 @@ on:
       - main
 
 jobs:
-  deploy-schema:
+  update-request-mapping:
     runs-on: ubuntu-latest
-    
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Checkout repository
@@ -24,24 +20,12 @@ jobs:
           aws-region: ap-south-1
           role-session-name: GitHubActions
 
-      - name: Install Python and dependencies
+      - name: Install AWS CLI
         run: |
           sudo apt-get update
-          sudo apt-get install python3-pip -y
-          pip3 install boto3 jq
+          sudo apt-get install -y awscli
 
-      - name: Base64 encode GraphQL schema
+      - name: Execute update-request-mapping-template.sh
         run: |
-          base64 -w 0 $GITHUB_WORKSPACE/templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
-
-      - name: Deploy AppSync Schema
-        run: |
-          export API_ID=6o2znoypyjdthf6vdtf6rhwnz4
-          export API_NAME=AppSync-Commercial 
-          export AUTHENTICATION_TYPE="API_KEY"
-          aws appsync update-graphql-api --api-id $API_ID --name "$API_NAME" --definition fileb://$GITHUB_WORKSPACE/data.graphql.base64 --authentication-type $AUTHENTICATION_TYPE
-
-      - name: Wait for schema update to complete
-        run: |
-          sleep 10  # Adjust sleep duration as needed
-          aws appsync get-graphql-api --api-id $API_ID  # Check status, handle completion logic as needed
+          chmod +x $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
+          sh $GITHUB_WORKSPACE/scripts/update-request-mapping-template.sh
