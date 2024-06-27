@@ -3,11 +3,15 @@ name: Update AppSync Schema
 on:
   push:
     branches:
-      - main 
+      - main # Or your default branch
 
 jobs:
   update-schema:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
     - name: Checkout repository
@@ -16,14 +20,15 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role  #Role to Assume
+        role-to-assume: arn:aws:iam::058264356572:role/sts-appsync-role
         aws-region: ap-south-1
-
+        role-session-name: GitHubActions
+    
     - name: Install AWS CLI
       run: |
-        curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-        sudo installer -pkg AWSCLIV2.pkg -target /
-
+          curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+          sudo installer -pkg AWSCLIV2.pkg -target /
+  
     - name: Update AppSync Schema
       run: |
-        aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition file://templates/data.graphql
+          aws appsync start-schema-creation --api-id 6o2znoypyjdthf6vdtf6rhwnz4 --definition file://templates/data.graphql
