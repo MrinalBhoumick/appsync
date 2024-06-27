@@ -2,7 +2,6 @@
 
 # Make sure API_ID, API_NAME, and AUTHENTICATION_TYPE are set before running this script
 
-
 echo "Starting schema creation for AppSync API with API ID $API_ID"
 
 # Fetch the GraphQL schema file from GitHub
