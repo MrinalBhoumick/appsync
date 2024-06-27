@@ -34,6 +34,7 @@ jobs:
         run: |
           base64 -w 0 $GITHUB_WORKSPACE/templates/data.graphql > $GITHUB_WORKSPACE/data.graphql.base64
 
-      - name: Deploy AppSync Schema
+      - name: Execute start-schema.sh
         run: |
-          python3 appsync-schema-uploader deploy --api-id YOUR_API_ID --schema-file $GITHUB_WORKSPACE/data.graphql.base64 --env dev
+          chmod +x $GITHUB_WORKSPACE/scripts/start-schema.sh  # Ensure script is executable
+          $GITHUB_WORKSPACE/scripts/start-schema.sh
