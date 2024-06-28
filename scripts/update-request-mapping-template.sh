@@ -16,7 +16,7 @@ resolvers=$(aws appsync list-resolvers --api-id $API_ID --query "resolvers[*].ty
 
 for resolver in $resolvers; do
     echo "Updating request mapping template for resolver: $resolver"
-    aws appsync update-resolver --api-id $API_ID --type-name $resolver --field-name <FIELD_NAME> --request-mapping-template file://$GITHUB_WORKSPACE/templates/request-mapping-template.graphql --region $AWS_REGION
+    aws appsync update-resolver --api-id $API_ID --type-name "type-name" --field-name <FIELD_NAME> --request-mapping-template file://$GITHUB_WORKSPACE/templates/request-mapping-template.graphql --region $AWS_REGION
 done
 
 echo "Request mapping templates updated successfully for all resolvers."
