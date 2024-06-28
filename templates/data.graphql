@@ -1,4 +1,4 @@
-type BankAccountListTableType {
+type BankAccountListTableType11111111111 {
   id: Int
   bank_id: Int
   beneficiary_name: String
