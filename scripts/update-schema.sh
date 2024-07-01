@@ -1,18 +1,10 @@
 #!/bin/bash
 
-# Configure AWS CLI if not already configured
-if [[ ! -f ~/.aws/credentials ]]; then
-    echo "AWS CLI is not configured. Configuring AWS CLI..."
-    aws configure
-fi
-
-# Fetch AppSync API ID from CodeBuild environment
+# Fetch AppSync API ID from the environment
 if [[ -z "$API_ID" ]]; then
     echo "Error: API_ID environment variable is not set."
     exit 1
 fi
-
-API_ID="$API_ID"
 
 # Determine the path to the templates directory relative to the script's location
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -25,8 +17,17 @@ if [[ ! -s $SCHEMA_FILE ]]; then
     exit 1
 fi
 
-# Update the AppSync API schema using appsync-schema-uploader
+# Encode the GraphQL schema file in base64
+SCHEMA_BASE64=$(base64 -w 0 "$SCHEMA_FILE")
+
+# Assume the role and get temporary credentials
+ASSUME_ROLE_OUTPUT=$(aws sts assume-role --role-arn arn:aws:iam::058264356572:role/sts-tenant-lambda-role --role-session-name CodeBuildSession)
+export AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.AccessKeyId')
+export AWS_SECRET_ACCESS_KEY=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SecretAccessKey')
+export AWS_SESSION_TOKEN=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SessionToken')
+
+# Initiate schema creation for the AppSync API
 echo "Updating AppSync API schema..."
-python3 -m appsync_schema_uploader --api-id "$API_ID" --schema "$SCHEMA_FILE"
+aws appsync start-schema-creation --api-id "$API_ID" --definition "data:text/plain;base64,$SCHEMA_BASE64"
 
 echo "Schema update process completed."
