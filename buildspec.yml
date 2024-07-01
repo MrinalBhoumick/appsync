@@ -2,19 +2,11 @@ version: 0.2
 
 phases:
   install:
-    runtime-versions:
-      python: 3.10
     commands:
       - apt-get update
-      - apt-get install -y python3 python3-venv
-      - pip install boto3
 
   build:
     commands:
-      - python scripts/app.py
+      - bash scripts/update-schema.sh
       # - sh scripts/update-request-mapping-template.sh
       # - sh scripts/update-response-mapping-template.sh
-
-  post_build:
-    commands:
-      - deactivate
