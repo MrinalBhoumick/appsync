@@ -36,6 +36,15 @@ input BankListInput {
   swift: String
 }
 
+type AddBankInfoTableType {
+  address: String
+  branch_name: String
+  id: Int
+  ifsc: String
+  name: String
+  swift: String
+}
+
 type BankAccountListTableType {
   account_no: String
   bank_id: Int
