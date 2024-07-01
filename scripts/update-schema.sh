@@ -1,35 +1,54 @@
 #!/bin/bash
 
-echo "Starting schema creation for AppSync API from $GITHUB_REPO_URL"
 
-# Fetch the GraphQL schema file from GitHub
-if curl -o data.graphql "$GITHUB_REPO_URL"; then
-    echo "Schema file downloaded successfully."
-else
-    echo "Failed to download the schema file."
+# Check if AWS CLI is installed
+if ! command -v aws &> /dev/null; then
+    echo "AWS CLI is not installed. Please install AWS CLI first."
     exit 1
 fi
 
-# Encode the GraphQL schema file in base64
-SCHEMA_BASE64=$(base64 -w 0 data.graphql)
-
-# Initiate schema creation for the AppSync API
-if aws appsync start-schema-creation --api-id "$API_ID" --definition "data:text/plain;base64,$SCHEMA_BASE64"; then
-    echo "Schema creation initiated successfully."
-else
-    echo "Failed to initiate schema creation."
+# Check if Python is installed
+if ! command -v python &> /dev/null; then
+    echo "Python is not installed. Please install Python first."
     exit 1
 fi
 
-# Optional: adjust sleep time as needed to ensure the schema creation process has time to start
-sleep 10
+# Check if appsync-schema-uploader package is installed
+if ! python -m pip show appsync-schema-uploader &> /dev/null; then
+    echo "Installing appsync-schema-uploader..."
+    python -m pip install appsync-schema-uploader
+fi
 
-# Update the AppSync API with a new name and authentication type
-if aws appsync update-graphql-api --api-id "$API_ID" --name "$API_NAME" --authentication-type "$AUTHENTICATION_TYPE"; then
-    echo "AppSync API updated successfully."
-else
-    echo "Failed to update the AppSync API."
+# Configure AWS CLI if not already configured
+if [[ ! -f ~/.aws/credentials ]]; then
+    echo "AWS CLI is not configured. Configuring AWS CLI..."
+    aws configure
+fi
+
+# Prompt the user to enter the AppSync API ID
+read -p "Enter your AppSync API ID: " API_ID
+
+# Check if the API ID is not empty
+if [[ -z "$API_ID" ]]; then
+    echo "API ID cannot be empty."
     exit 1
 fi
+
+# Determine the path to the templates directory relative to the script's location
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+TEMPLATES_DIR="$SCRIPT_DIR/../templates"  # Adjust relative path as needed
+SCHEMA_FILE="$TEMPLATES_DIR/data.graphql"
+
+# Check if the schema file exists and is not empty
+if [[ ! -s $SCHEMA_FILE ]]; then
+    echo "Schema file not found or is empty: $SCHEMA_FILE"
+    exit 1
+fi
+
+# Update the AppSync API schema using appsync-schema-uploader
+echo "Updating AppSync API schema..."
+python -m appsync_schema_uploader \
+    --api-id "$API_ID" \
+    --schema "$SCHEMA_FILE"
 
 echo "Schema update process completed."
