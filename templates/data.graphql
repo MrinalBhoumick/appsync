@@ -1,46 +1,3 @@
-schema {
-  query: Query
-  mutation: Mutation
-}
-
-type Query {
-  getAddBankInfo(id: Int!): AddBankInfoTableType
-  getBankAccountList(id: Int!): BankAccountListTableType
-  getBankList(id: Int!): BankListTableType
-}
-
-type Mutation {
-  addBankInfo(input: AddBankInfoInput!): AddBankInfoTableType
-  updateBankAccountList(input: BankAccountListInput!): BankAccountListTableType
-  updateBankList(input: BankListInput!): BankListTableType
-}
-
-input AddBankInfoInput {
-  address: String
-  branch_name: String
-  id: Int
-  ifsc: String
-  name: String
-  swift: String
-}
-
-input BankAccountListInput {
-  account_no: String
-  bank_id: Int
-  beneficiary_name: String
-  id: Int
-  invoice_type: String
-}
-
-input BankListInput {
-  address: String
-  branch_name: String
-  id: Int
-  ifsc: String
-  name: String
-  swift: String
-}
-
 type AddBankInfoTableType {
   address: String
   branch_name: String
@@ -65,4 +22,1443 @@ type BankListTableType {
   ifsc: String
   name: String
   swift: String
+}
+
+type CTCTimeLineTableType {
+  ctc_id: Int
+  effective_from: AWSDateTime
+  per_hour_cost_amount: Float
+  variable_cost_amount: Float
+}
+
+type CompanyTableType {
+  address: String
+  bank_account_id: Int
+  financial_details: AWSJSON
+  id: Int
+  invoice_prefix: String
+  name: String
+  region_id: Int
+}
+
+type CostToCompanyTableType {
+  annual_performance_bonus_amount: Float
+  basic_amount: Float
+  children_education_allowance_amount: Float
+  contribution_of_employer_amount: Float
+  currency_type: String
+  effective_from: AWSDateTime
+  email: String
+  hra_amount: Float
+  id: Int
+  joining_bonus_amount: Float
+  medical_allowance_amount: Float
+  medical_insurance_amount: Float
+  other_benefits_amount: Float
+  per_hour_cost_amount: Float
+  qplc_bonus_amount: Float
+  relocation_bonus_amount: Float
+  retention_bonus_amount: Float
+  special_allowance_amount: Float
+  transport_allowance_amount: Float
+  user_serial_id: Int
+  variable_cost_amount: Float
+}
+
+type CreatedInvoiceTableType {
+  doc_items: AWSJSON
+  doc_metadata: AWSJSON
+  doc_pdf_url: String
+  id: Int
+}
+
+type CurrencyListTableType {
+  group_id: Int
+  id: Int
+  name: String
+}
+
+type CustomersTableType {
+  financial_details: AWSJSON
+  firm_id: Int
+  tax_applicable: Boolean
+}
+
+type ExchangeRatesTableType {
+  added_by: String
+  added_dt: AWSDateTime
+  currency_id: Int
+  edited_by: String
+  edited_dt: AWSDateTime
+  exchange_date: AWSDateTime
+  id: Int
+  rate: Float
+}
+
+type InvoiceDetailsTableType {
+  company_id: String
+  cost_center_id: String
+  created_at: AWSDateTime
+  created_by: String
+  currency_type: String
+  customer_id: String
+  draft: Boolean
+  due_date: AWSDateTime
+  duration_from: AWSDateTime
+  duration_to: AWSDateTime
+  exchange_currency_value: Float
+  gross_amount: Float
+  gross_outstanding_amount: Float
+  id: Int
+  invoice_date: AWSDateTime
+  invoice_memo: String
+  invoice_number: String
+  invoice_type: String
+  milestones_id: Int
+  net_amount: Float
+  pay_currency: String
+  s3_key: String
+  status: String
+  sub_company_id: Int
+  tax_breakup: AWSJSON
+  tax_input_rcm_amount: Float
+  tax_output_rcm_amount: Float
+  tds_amount: Float
+  to_currency: String
+  updated_at: AWSDateTime
+  updated_by: String
+}
+
+type InvoiceDetailsTableType_WithCount {
+  count: Int
+  countStatusInvoice: String
+  result: [InvoiceDetailsTableType]
+  totalCost: Float
+}
+
+type InvoiceItemDetailsTableType {
+  description: String
+  hsn_sac: String
+  id: Int
+  invoice_id: Int
+  item_amount: Float
+  item_category_id: Int
+  item_quantity: Int
+  tax_percent: Float
+  tax_type: String
+}
+
+type InvoiceItemsCategoryTableType {
+  category: String
+  class_type: String
+  id: Int
+  name: String
+}
+
+type InvoiceNumberTableType {
+  invoice_number: Int
+}
+
+type InvoicePaidDetailsTableType {
+  bank_account_id: Int
+  bank_charges_abroad_amount: Float
+  exchange_currency_value: Float
+  exchange_fluctuation_gain_loss: Float
+  id: Int
+  invoice_id: Int
+  narration: String
+  paid_date_time: AWSDateTime
+  pay_currency: String
+  shortfall_realisation_amount: Float
+  to_currency: String
+}
+
+type MilestonesTableType {
+  due_date: AWSDateTime
+  from_date: AWSDateTime
+  id: Int
+  name: String
+  project_id: String
+  sort_id: Int
+  to_date: AWSDateTime
+}
+
+type Mutation {
+  #   add bank account list
+  addBankAccountList(input: addBankAccountList_InputType!): [BankAccountListTableType]
+  #  Add Bank
+  addBankInfo(input: addBankInfo_InputType!): [AddBankInfoTableType]
+  #   CTC Timeline
+  addCTCTimeLine(input: addCTCTimeLine_InputType!): [CTCTimeLineTableType]
+  #   Company
+  addCompany(input: addCompany_InputType!): [CompanyTableType]
+  #   Cost Center Mutation
+  addCostCenter(input: addCostCenter_InputType!): [costCenterTableType]
+  #   Cost To Company
+  addCostToCompany(input: addCostToCompany_InputType!): [CostToCompanyTableType]
+  #   Created invoice
+  addCreatedInvoice(input: addCreatedInvoice_InputType!): [CreatedInvoiceTableType]
+  #   Customers Mutation
+  addCustomers(input: addCustomers_InputType!): [CustomersTableType]
+  #   Invoice Details Mutation
+  addInvoiceDetails(input: addInvoiceDetails_InputType!): [InvoiceDetailsTableType]
+  #   Invoice Item Details
+  addInvoiceItemDetails(input: addInvoiceItemDetails_InputType!): [InvoiceItemDetailsTableType]
+  #   Invoice items Category
+  addInvoiceItemsCategory(input: addInvoiceItemsCategory_InputType!): [InvoiceItemsCategoryTableType]
+  #   Invoice Paid Details Mutation
+  addInvoicePaidDetails(input: addInvoicePaidDetails_InputType!): [InvoicePaidDetailsTableType]
+  #   Milestones
+  addMilestones(input: addMilestones_InputType!): [MilestonesTableType]
+  #   Region
+  addRegion(input: addRegion_InputType!): [RegionTableType]
+  #   Tag list
+  addTagList(input: addTagList_InputType!): [TagListTableType]
+  #   Tagged Information
+  addTaggedInfo(input: addTaggedInfo_InputType!): [TaggedInfoTableType]
+  #   TaskRevenue
+  addTaskRevenue(input: addTaskRevenue_InputType!): [TaskRevenueTableType]
+  #   Vendors Mutation
+  addVendors(input: addVendors_InputType!): [VendorsTableType]
+  deleteBankAccountList(input: deleteBankAccountList_InputType!): [String]
+  deleteCTCTimeLine(input: deleteCTCTimeLine_InputType!): [String]
+  deleteCompany(input: deleteCompany_InputType!): [String]
+  deleteCostCenter(input: deleteCostCenter_InputType!): [String]
+  deleteCostToCompany(input: deleteCostToCompany_InputType!): [String]
+  deleteCreatedInvoice(input: deleteCreatedInvoice_InputType!): [String]
+  deleteCustomers(input: deleteCustomers_InputType!): [String]
+  deleteInvoiceDetails(input: deleteInvoiceDetails_InputType!): [String]
+  deleteInvoiceItemDetails(input: deleteInvoiceItemDetails_InputType!): [String]
+  deleteInvoiceItemsCategory(input: deleteInvoiceItemsCategory_InputType!): [String]
+  deleteInvoicePaidDetails(input: deleteInvoicePaidDetails_InputType!): [String]
+  deleteMilestones(input: deleteMilestones_InputType!): [String]
+  deleteRegion(input: deleteRegion_InputType!): [String]
+  deleteTagList(input: deleteTagList_InputType!): [String]
+  deleteTaggedInfo(input: deleteTaggedInfo_InputType!): [String]
+  deleteTaskRevenue(input: deleteTaskRevenue_InputType!): [String]
+  deleteVendors(input: deleteVendors_InputType!): [String]
+  updateBankAccountList(input: updateBankAccountList_InputType!): [BankAccountListTableType]
+  updateCTCTimeLine(input: updateCTCTimeLine_InputType!): [CTCTimeLineTableType]
+  updateCompany(input: updateCompany_InputType!): [CompanyTableType]
+  updateCostCenter(input: updateCostCenter_InputType!): [costCenterTableType]
+  updateCostToCompany(input: updateCostToCompany_InputType!): [CostToCompanyTableType]
+  updateCreatedInvoice(input: updateCreatedInvoice_InputType!): [CreatedInvoiceTableType]
+  updateCustomers(input: updateCustomers_InputType!): [CustomersTableType]
+  updateInvoiceDetails(input: updateInvoiceDetails_InputType!): [InvoiceDetailsTableType]
+  updateInvoiceItemDetails(input: updateInvoiceItemDetails_InputType!): [InvoiceItemDetailsTableType]
+  updateInvoiceItemsCategory(input: updateInvoiceItemsCategory_InputType!): [InvoiceItemsCategoryTableType]
+  updateInvoicePaidDetails(input: updateInvoicePaidDetails_InputType!): [InvoicePaidDetailsTableType]
+  updateMilestones(input: updateMilestones_InputType!): [MilestonesTableType]
+  updateRegion(input: updateRegion_InputType!): [RegionTableType]
+  updateTagList(input: updateTagList_InputType!): [TagListTableType]
+  updateTaggedInfo(input: updateTaggedInfo_InputType!): [TaggedInfoTableType]
+  updateTaskRevenue(input: updateTaskRevenue_InputType!): [TaskRevenueTableType]
+  updateVendors(input: updateVendors_InputType!): [VendorsTableType]
+}
+
+type Query {
+  #   Bank Account List
+  getBankAccountList(input: getBankAccountList_InputType): [BankAccountListTableType]
+  #   Bank  List
+  getBankList(input: getBankList_InputType): [BankListTableType]
+  #   CTC Timeline
+  getCTCTimeLine(input: getCTCTimeLine_InputType): [CTCTimeLineTableType]
+  #   Commercial Metrics
+  getCommercialMetrics(input: getCommercialMetrics_InputType!): [AWSJSON]
+  #   Company
+  getCompany(input: getCompany_InputType): [CompanyTableType]
+  #   Cost Center Query
+  getCostCenter(input: getCostCenter_InputType): [costCenterTableType]
+  getCostCenterAttachment(input: getCostCenterAttachment_InputType): [costCenterAttachmentTableType]
+  #   Cost To Company
+  getCostToCompany(input: getCostToCompany_InputType): [CostToCompanyTableType]
+  #   created Invoice Query
+  getCreatedInvoice(input: getCreatedInvoice_InputType!): [CreatedInvoiceTableType]
+  #  Currency List
+  getCurrencyList(input: getCurrencyList_InputType): [CurrencyListTableType]
+  #   Customers Query
+  getCustomers(input: getCustomers_InputType): [CustomersTableType]
+  #   Dashboard Metrics
+  getDashboardMetrics(input: getDashboardMetrics_InputType!): AWSJSON
+  #   ExchangeRates
+  getExchangeRates(input: getExchangeRates_InputType): [ExchangeRatesTableType]
+  #   Invoice Details Query
+  getInvoiceDetails(input: getInvoiceDetails_InputType): InvoiceDetailsTableType_WithCount
+  #   Invoice Item Details Query
+  getInvoiceItemDetails(input: getInvoiceItemDetails_InputType): [InvoiceItemDetailsTableType]
+  #   Invoice Items Category
+  getInvoiceItemsCategory(input: getInvoiceItemsCategory_InputType): [InvoiceItemsCategoryTableType]
+  getInvoiceNumber: [InvoiceNumberTableType]
+  #   Invoice Paid Details
+  getInvoicePaidDetails(input: getInvoicePaidDetails_InputType): [InvoicePaidDetailsTableType]
+  #   Milestones
+  getMilestones(input: getMilestones_InputType!): [MilestonesTableType]
+  #   Region
+  getRegion(input: getRegion_InputType): [RegionTableType]
+  #   Invoice Item Details Query
+  getTagList(input: getTagList_InputType): [TagListTableType]
+  #   Taggedinfo
+  getTaggedInfo(input: getTaggedInfo_InputType): TaggedInfo_WithCount
+  #   TaskRevenue
+  getTaskRevenue(input: getTaskRevenue_InputType): [TaskRevenueTableType]
+  #  TaskRevenueIssueList
+  getTaskRevenueIssueList(input: getTaskRevenueIssueList_InputType): String
+  #   Customers Query
+  getVendors(input: getVendors_InputType): [VendorsTableType]
+}
+
+type RegionTableType {
+  country: String
+  currency_type: String
+  id: Int
+  name: String
+  responsible_person_email: String
+  sales_tax: Float
+}
+
+type TagListTableType {
+  invoice_type: String
+  tag_id: Int
+  title: String
+  type: String
+}
+
+type TaggedInfoTableType {
+  attach_id: Int
+  entity_id: Int
+  entity_type: String
+  tag_id: Int
+}
+
+type TaggedInfo_WithCount {
+  count: Int
+  result: [TaggedInfoTableType]
+}
+
+type TaskRevenueIssueListTableType {
+  id: Int
+}
+
+type TaskRevenueTableType {
+  activityData: AWSJSON
+  billed_from: AWSDateTime
+  billed_to: AWSDateTime
+  created_by: String
+  created_on: AWSDateTime
+  desc_attachment_key: String
+  description: String
+  exchange_rates_id: Int
+  id: Int
+  inr_added_directly: Boolean
+  outsourcing_amount: Float
+  prod_hours_billed: String
+  prod_hours_unbilled: String
+  project_id: String
+  qc_hours_billed: String
+  qc_hours_unbilled: String
+  revenue_amount: Float
+  revenue_amount_inr: Float
+  task_ids_billed: [Int]
+  task_ids_unbilled: [Int]
+  updated_by: String
+  updated_on: AWSDateTime
+}
+
+type VendorsTableType {
+  address: String
+  bank_account_id: Int
+  country: String
+  email: String
+  financial_details: AWSJSON
+  id: Int
+  name: String
+  phone: String
+  tax_applicable: Boolean
+}
+
+type costCenterAttachmentTableType {
+  id: String
+  name: String
+}
+
+type costCenterTableType {
+  company_id: String
+  dept_id: String
+  id: String
+  name: String
+  project_id: String
+  type: String
+}
+
+input TableBooleanFilterInput {
+  eq: Boolean
+  ne: Boolean
+}
+
+input TableFloatFilterInput {
+  eq: Float
+  ge: Float
+  gt: Float
+  in: [Float]
+  le: Float
+  lt: Float
+  ne: Float
+}
+
+input TableIntFilterInput {
+  eq: Int
+  ge: Int
+  gt: Int
+  in: [Int]
+  le: Int
+  lt: Int
+  ne: Int
+}
+
+input TableStringFilterInput {
+  eq: String
+  ge: String
+  gt: String
+  in: [String]
+  le: String
+  lt: String
+  ne: String
+  search: String
+}
+
+input addBankAccountList_InputType {
+  insert: addBankAccountList_Insert_InputType!
+}
+
+input addBankAccountList_Insert_InputType {
+  account_no: String!
+  bank_id: Int!
+  beneficiary_name: String!
+  invoice_type: String!
+}
+
+input addBankInfo_InputType {
+  insert: addBankInfo_Insert_InputType!
+}
+
+input addBankInfo_Insert_InputType {
+  address: String!
+  branch_name: String!
+  ifsc: String!
+  name: String!
+  swift: String
+}
+
+input addCTCTimeLine_InputType {
+  insert: addCTCTimeLine_Insert_InputType!
+}
+
+input addCTCTimeLine_Insert_InputType {
+  ctc_id: Int
+  effective_from: AWSDateTime
+  per_hour_cost_amount: Float
+  variable_cost_amount: Float
+}
+
+input addCompany_InputType {
+  insert: addCompany_Insert_InputType!
+}
+
+input addCompany_Insert_InputType {
+  address: String!
+  bank_account_id: Int!
+  financial_details: String
+  invoice_prefix: String
+  name: String!
+  region_id: Int!
+}
+
+input addCostCenter_InputType {
+  insert: addCostCenter_Insert_InputType
+}
+
+input addCostCenter_Insert_InputType {
+  company_id: String
+  dept_id: String
+  name: String!
+  project_id: String
+  type: String!
+}
+
+input addCostToCompany_InputType {
+  insert: addCostToCompany_Insert_InputType!
+}
+
+input addCostToCompany_Insert_InputType {
+  annual_performance_bonus_amount: Float
+  basic_amount: Float
+  children_education_allowance_amount: Float
+  contribution_of_employer_amount: Float
+  currency_type: String
+  effective_from: AWSDateTime
+  email: String
+  hra_amount: Float
+  joining_bonus_amount: Float
+  medical_allowance_amount: Float
+  medical_insurance_amount: Float
+  other_benefits_amount: Float
+  per_hour_cost_amount: Float
+  qplc_bonus_amount: Float
+  relocation_bonus_amount: Float
+  retention_bonus_amount: Float
+  special_allowance_amount: Float
+  transport_allowance_amount: Float
+  user_serial_id: Int
+  variable_cost_amount: Float
+}
+
+input addCreatedInvoice_InputType {
+  insert: addCreatedInvoice_Insert_InputType!
+}
+
+input addCreatedInvoice_Insert_InputType {
+  doc_items: AWSJSON!
+  doc_metadata: AWSJSON!
+  doc_pdf_url: String!
+}
+
+input addCustomers_InputType {
+  insert: addCustomers_Insert_InputType!
+}
+
+input addCustomers_Insert_InputType {
+  financial_details: String
+  firm_id: Int!
+  tax_applicable: Boolean!
+}
+
+input addInvoiceDetails_InputType {
+  insert: addInvoiceDetails_Insert_InputType
+}
+
+input addInvoiceDetails_Insert_InputType {
+  cost_center_id: String
+  currency_type: String
+  customer_id: String
+  draft: Boolean
+  due_date: AWSDateTime!
+  duration_from: AWSDateTime
+  duration_to: AWSDateTime
+  exchange_currency_value: Float
+  gross_amount: Float
+  gross_outstanding_amount: Float
+  invoice_date: AWSDateTime!
+  invoice_memo: String
+  invoice_number: String
+  invoice_type: String!
+  milestones_id: Int
+  net_amount: Float
+  pay_currency: String
+  s3_key: String
+  status: String
+  sub_company_id: Int
+  tax_breakup: String
+  tax_input_rcm_amount: Float
+  tax_output_rcm_amount: Float
+  tds_amount: Float
+  to_currency: String
+}
+
+input addInvoiceItemDetails_InputType {
+  insert: [addInvoiceItemDetails_Insert_InputType]!
+}
+
+input addInvoiceItemDetails_Insert_InputType {
+  description: String!
+  hsn_sac: String
+  invoice_id: Int!
+  item_amount: Float!
+  item_category_id: Int!
+  item_quantity: Int!
+  tax_percent: Float!
+  tax_type: String!
+}
+
+input addInvoiceItemsCategory_InputType {
+  insert: addInvoiceItemsCategory_Insert_InputType!
+}
+
+input addInvoiceItemsCategory_Insert_InputType {
+  category: String!
+  class_type: String!
+  name: String!
+}
+
+input addInvoicePaidDetails_InputType {
+  insert: addInvoicePaidDetails_Insert_InputType!
+}
+
+input addInvoicePaidDetails_Insert_InputType {
+  bank_account_id: Int
+  bank_charges_abroad_amount: Float
+  exchange_currency_value: Float!
+  exchange_fluctuation_gain_loss: Float
+  invoice_id: Int!
+  narration: String
+  paid_date_time: AWSDateTime!
+  pay_currency: String!
+  shortfall_realisation_amount: Float
+  to_currency: String!
+}
+
+input addMilestones_InputType {
+  insert: addMilestones_Insert_InputType!
+}
+
+input addMilestones_Insert_InputType {
+  due_date: AWSDateTime
+  from_date: AWSDateTime
+  name: String
+  project_id: String
+  sort_id: Int
+  to_date: AWSDateTime
+}
+
+input addRegion_InputType {
+  insert: addRegion_Insert_InputType!
+}
+
+input addRegion_Insert_InputType {
+  country: String!
+  currency_type: String!
+  name: String!
+  responsible_person_email: String!
+  sales_tax: Float!
+}
+
+input addTagList_InputType {
+  insert: addTagList_Insert_InputType!
+}
+
+input addTagList_Insert_InputType {
+  invoice_type: String!
+  title: String!
+  type: String!
+}
+
+input addTaggedInfo_InputType {
+  insert: [addTaggedInfo_Insert_InputType]!
+}
+
+input addTaggedInfo_Insert_InputType {
+  entity_id: Int!
+  entity_type: String!
+  tag_id: Int!
+}
+
+input addTaskRevenue_InputType {
+  insert: addTaskRevenue_Insert_InputType!
+}
+
+input addTaskRevenue_Insert_InputType {
+  billed_from: AWSDateTime!
+  billed_to: AWSDateTime!
+  created_by: String
+  created_on: AWSDateTime
+  desc_attachment_key: String
+  description: String
+  exchange_rates_id: Int
+  inr_added_directly: Boolean
+  outsourcing_amount: Float
+  prod_hours_billed: String
+  prod_hours_unbilled: String
+  project_id: String!
+  qc_hours_billed: String
+  qc_hours_unbilled: String
+  revenue_amount: Float!
+  revenue_amount_inr: Float
+  task_ids_billed: String!
+  task_ids_unbilled: String
+  updated_by: String
+  updated_on: AWSDateTime
+}
+
+input addVendors_InputType {
+  insert: addVendors_Insert_InputType!
+}
+
+input addVendors_Insert_InputType {
+  address: String!
+  bank_account_id: Int
+  country: String!
+  email: String
+  financial_details: String
+  name: String!
+  phone: String
+  tax_applicable: Boolean!
+}
+
+input deleteBankAccountList_InputType {
+  where: deleteBankAccountList_Where_InputType
+}
+
+input deleteBankAccountList_Where_InputType {
+  id: Int!
+}
+
+input deleteCTCTimeLine_InputType {
+  where: deleteCTCTimeLine_Where_InputType
+}
+
+input deleteCTCTimeLine_Where_InputType {
+  ctc_id: Int!
+}
+
+input deleteCompany_InputType {
+  where: deleteCompany_Where_InputType
+}
+
+input deleteCompany_Where_InputType {
+  id: Int!
+}
+
+input deleteCostCenter_InputType {
+  where: deleteCostCenter_Where_InputType
+}
+
+input deleteCostCenter_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input deleteCostToCompany_InputType {
+  where: deleteCostToCompany_Where_InputType
+}
+
+input deleteCostToCompany_Where_InputType {
+  id: Int!
+}
+
+input deleteCreatedInvoice_InputType {
+  where: deleteCreatedInvoice_Where_InputType
+}
+
+input deleteCreatedInvoice_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input deleteCustomers_InputType {
+  where: deleteCustomers_Where_InputType
+}
+
+input deleteCustomers_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input deleteInvoiceDetails_InputType {
+  where: deleteInvoiceDetails_Where_InputType
+}
+
+input deleteInvoiceDetails_Where_InputType {
+  id: Int!
+}
+
+input deleteInvoiceItemDetails_InputType {
+  where: deleteInvoiceItemDetails_Where_InputType
+}
+
+input deleteInvoiceItemDetails_Where_InputType {
+  id: Int
+  invoice_id: Int
+}
+
+input deleteInvoiceItemsCategory_InputType {
+  where: deleteInvoiceItemsCategory_Where_InputType
+}
+
+input deleteInvoiceItemsCategory_Where_InputType {
+  id: Int
+  key: String
+}
+
+input deleteInvoicePaidDetails_InputType {
+  where: deleteInvoicePaidDetails_Where_InputType
+}
+
+input deleteInvoicePaidDetails_Where_InputType {
+  id: Int!
+}
+
+input deleteMilestones_InputType {
+  where: deleteMilestones_Where_InputType
+}
+
+input deleteMilestones_Where_InputType {
+  id: Int!
+}
+
+input deleteRegion_InputType {
+  where: deleteRegion_Where_InputType
+}
+
+input deleteRegion_Where_InputType {
+  id: Int!
+}
+
+input deleteTagList_InputType {
+  where: deleteTagList_Where_InputType
+}
+
+input deleteTagList_Where_InputType {
+  tag_id: Int!
+}
+
+input deleteTaggedInfo_InputType {
+  where: deleteTaggedInfo_Where_InputType
+}
+
+input deleteTaggedInfo_Where_InputType {
+  attach_id: Int
+  entity_id: Int
+}
+
+input deleteTaskRevenue_InputType {
+  where: deleteTaskRevenue_Where_InputType
+}
+
+input deleteTaskRevenue_Where_InputType {
+  id: Int!
+}
+
+input deleteVendors_InputType {
+  where: deleteVendors_Where_InputType
+}
+
+input deleteVendors_Where_InputType {
+  id: Int!
+}
+
+input getBankAccountList_InputType {
+  where: getBankAccountList_Where_InputType
+}
+
+input getBankAccountList_Where_InputType {
+  account_no: TableStringFilterInput
+  bank_id: TableIntFilterInput
+  beneficiary_name: TableStringFilterInput
+  id: TableIntFilterInput
+  invoice_type: TableStringFilterInput
+}
+
+input getBankList_InputType {
+  where: getBankList_Where_InputType
+}
+
+input getBankList_Where_InputType {
+  address: TableStringFilterInput
+  branch_name: TableStringFilterInput
+  id: TableIntFilterInput
+  ifsc: TableStringFilterInput
+  name: TableStringFilterInput
+  swift: TableStringFilterInput
+}
+
+input getCTCTimeLine_InputType {
+  where: getCTCTimeLine_Where_InputType!
+}
+
+input getCTCTimeLine_Where_InputType {
+  ctc_id: TableIntFilterInput!
+}
+
+input getCommercialMetrics_InputType {
+  mode: String!
+  payload: AWSJSON
+}
+
+#   Company
+input getCompany_InputType {
+  where: getCompany_Where_InputType
+}
+
+input getCompany_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input getCostCenterAttachment_InputType {
+  where: getCostCenterAttachment_Where_InputType!
+}
+
+input getCostCenterAttachment_Where_InputType {
+  type: TableStringFilterInput!
+}
+
+#   Cost Center Input Types Start
+input getCostCenter_InputType {
+  where: getCostCenter_Where_InputType
+}
+
+input getCostCenter_Where_InputType {
+  company_id: TableStringFilterInput
+  dept_id: TableStringFilterInput
+  id: TableStringFilterInput
+  name: TableStringFilterInput
+  project_id: TableStringFilterInput
+  type: TableStringFilterInput
+}
+
+#   Cost To Company
+input getCostToCompany_InputType {
+  where: getCostToCompany_Where_InputType!
+}
+
+input getCostToCompany_Where_InputType {
+  email: TableStringFilterInput!
+}
+
+#   Created Invoice
+input getCreatedInvoice_InputType {
+  where: getCreatedInvoice_Where_InputType!
+}
+
+input getCreatedInvoice_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input getCurrencyList_InputType {
+  where: getCurrencyList_Where_InputType
+}
+
+input getCurrencyList_Where_InputType {
+  group_id: TableIntFilterInput
+  id: TableIntFilterInput
+  name: TableStringFilterInput
+}
+
+#   Invoice Details
+input getCustomers_InputType {
+  where: getCustomers_Where_InputType
+}
+
+input getCustomers_Where_InputType {
+  firm_id: TableIntFilterInput
+  id: TableIntFilterInput
+}
+
+input getDashboardMetrics_InputType {
+  where: getDashboardMetrics_Where_InputType
+}
+
+input getDashboardMetrics_Where_InputType {
+  cost_center_id: String
+  from_date: AWSDateTime
+  mode: String
+  region_id: String
+  to_date: AWSDateTime
+}
+
+input getExchangeRates_InputType {
+  mode: String
+  where: getExchangeRates_Where_InputType
+}
+
+input getExchangeRates_Where_InputType {
+  currency_id: TableIntFilterInput
+  entry_type: TableStringFilterInput
+  exchange_date: TableStringFilterInput
+  id: TableIntFilterInput
+}
+
+#   Invoice Details
+input getInvoiceDetails_InputType {
+  limit: Int
+  order: getInvoiceDetails_Order_InputType
+  page: Int
+  totalCost: getInvoiceDetails_TotalCost_InputType
+  where: getInvoiceDetails_Where_InputType
+}
+
+input getInvoiceDetails_Order_InputType {
+  asc: TableStringFilterInput
+  desc: TableStringFilterInput
+}
+
+input getInvoiceDetails_TotalCost_InputType {
+  cost_center_id: String
+  customer_id: String
+  due_date: AWSDateTime
+  invoice_date: AWSDateTime
+  invoice_type: String
+  is_change_request: Boolean
+  status: String
+  sub_company_id: Int
+}
+
+input getInvoiceDetails_Where_InputType {
+  cost_center_id: TableStringFilterInput
+  created_invoice_id: TableIntFilterInput
+  customer_id: TableStringFilterInput
+  draft: TableBooleanFilterInput
+  id: TableIntFilterInput
+  invoice_number: TableStringFilterInput
+  invoice_type: TableStringFilterInput
+  is_change_request: Boolean
+  status: TableStringFilterInput
+  sub_company_id: TableIntFilterInput
+  tds_amount: TableFloatFilterInput
+}
+
+input getInvoiceItemDetails_InputType {
+  where: getInvoiceItemDetails_Where_InputType
+}
+
+input getInvoiceItemDetails_Where_InputType {
+  id: TableIntFilterInput
+  invoice_id: TableIntFilterInput
+}
+
+input getInvoiceItemsCategory_InputType {
+  where: getInvoiceItemsCategory_Where_InputType
+}
+
+input getInvoiceItemsCategory_Where_InputType {
+  category: TableStringFilterInput
+  class_type: TableStringFilterInput
+  id: TableIntFilterInput
+}
+
+input getInvoicePaidDetails_InputType {
+  where: getInvoicePaidDetails_Where_InputType
+}
+
+input getInvoicePaidDetails_Where_InputType {
+  id: TableIntFilterInput
+  invoice_id: TableIntFilterInput
+}
+
+#   Milestones
+input getMilestones_InputType {
+  where: getMilestones_Where_InputType
+}
+
+input getMilestones_Where_InputType {
+  project_id: TableStringFilterInput!
+}
+
+#   Region
+input getRegion_InputType {
+  where: getRegion_Where_InputType
+}
+
+input getRegion_Where_InputType {
+  id: TableIntFilterInput!
+}
+
+input getTagList_InputType {
+  where: getTagList_Where_InputType
+}
+
+input getTagList_Where_InputType {
+  invoice_type: TableStringFilterInput
+  tag_id: TableIntFilterInput
+  title: TableStringFilterInput
+  type: TableStringFilterInput
+}
+
+input getTaggedInfo_InputType {
+  limit: Int
+  order: getTaggedInfo_Order_InputType
+  page: Int
+  where: getTaggedInfo_Where_InputType
+}
+
+input getTaggedInfo_Order_InputType {
+  asc: TableStringFilterInput
+  desc: TableStringFilterInput
+}
+
+input getTaggedInfo_Where_InputType {
+  attach_id: TableIntFilterInput
+  entity_id: TableIntFilterInput
+  entity_type: TableStringFilterInput
+  tag_id: TableIntFilterInput
+}
+
+input getTaskRevenueIssueList_InputType {
+  where: getTaskRevenueIssueList_Where_InputType
+}
+
+input getTaskRevenueIssueList_Where_InputType {
+  project_id: String
+  task_ids: String
+}
+
+input getTaskRevenue_InputType {
+  mode: String
+  where: getTaskRevenue_Where_InputType
+}
+
+input getTaskRevenue_Where_InputType {
+  billed_from: TableStringFilterInput
+  billed_to: TableStringFilterInput
+  created_by: TableStringFilterInput
+  created_on: TableStringFilterInput
+  desc_attachment_key: TableStringFilterInput
+  description: TableStringFilterInput
+  id: TableIntFilterInput
+  outsourcing_amount: TableFloatFilterInput
+  prod_hours_billed: TableStringFilterInput
+  prod_hours_unbilled: TableStringFilterInput
+  project_id: TableStringFilterInput
+  qc_hours_billed: TableStringFilterInput
+  qc_hours_unbilled: TableStringFilterInput
+  revenue_amount: TableFloatFilterInput
+  task_ids_billed: TableStringFilterInput
+  task_ids_unbilled: TableStringFilterInput
+  updated_by: TableStringFilterInput
+  updated_on: TableStringFilterInput
+}
+
+input getVendors_InputType {
+  where: getVendors_Where_InputType
+}
+
+input getVendors_Where_InputType {
+  address: TableStringFilterInput
+  country: TableStringFilterInput
+  id: TableIntFilterInput
+  name: TableStringFilterInput
+}
+
+input updateBankAccountList_InputType {
+  set: updateBankAccountList_Set_InputType!
+  where: updateBankAccountList_Where_InputType!
+}
+
+input updateBankAccountList_Set_InputType {
+  account_no: String
+  bank_id: Int
+  beneficiary_name: String
+  invoice_type: String
+}
+
+input updateBankAccountList_Where_InputType {
+  id: Int!
+}
+
+input updateCTCTimeLine_InputType {
+  set: updateCTCTimeLine_Set_InputType!
+  where: updateCTCTimeLine_Where_InputType!
+}
+
+input updateCTCTimeLine_Set_InputType {
+  effective_from: AWSDateTime
+  per_hour_cost_amount: Float
+  variable_cost_amount: Float
+}
+
+input updateCTCTimeLine_Where_InputType {
+  ctc_id: Int!
+}
+
+input updateCompany_InputType {
+  set: updateCompany_Set_InputType!
+  where: updateCompany_Where_InputType!
+}
+
+input updateCompany_Set_InputType {
+  address: String
+  bank_account_id: Int
+  financial_details: AWSJSON
+  invoice_prefix: String
+  name: String
+  region_id: Int
+}
+
+input updateCompany_Where_InputType {
+  id: Int!
+}
+
+input updateCostCenter_InputType {
+  set: updateCostCenter_Set_InputType!
+  where: updateCostCenter_Where_InputType!
+}
+
+input updateCostCenter_Set_InputType {
+  company_id: String
+  dept_id: String
+  name: String
+  project_id: String
+  type: String
+}
+
+input updateCostCenter_Where_InputType {
+  id: Int!
+}
+
+input updateCostToCompany_InputType {
+  set: updateCostToCompany_Set_InputType!
+  where: updateCostToCompany_Where_InputType!
+}
+
+input updateCostToCompany_Set_InputType {
+  annual_performance_bonus_amount: Float
+  basic_amount: Float
+  children_education_allowance_amount: Float
+  contribution_of_employer_amount: Float
+  currency_type: String
+  effective_from: AWSDateTime
+  email: String
+  hra_amount: Float
+  joining_bonus_amount: Float
+  medical_allowance_amount: Float
+  medical_insurance_amount: Float
+  other_benefits_amount: Float
+  per_hour_cost_amount: Float
+  qplc_bonus_amount: Float
+  relocation_bonus_amount: Float
+  retention_bonus_amount: Float
+  special_allowance_amount: Float
+  transport_allowance_amount: Float
+  user_serial_id: Int
+  variable_cost_amount: Float
+}
+
+input updateCostToCompany_Where_InputType {
+  id: Int!
+}
+
+input updateCreatedInvoice_InputType {
+  set: updateCreatedInvoice_Set_InputType!
+  where: updateCreatedInvoice_Where_InputType!
+}
+
+input updateCreatedInvoice_Set_InputType {
+  doc_items: AWSJSON
+  doc_metadata: AWSJSON
+  doc_pdf_url: String
+}
+
+input updateCreatedInvoice_Where_InputType {
+  id: Int!
+}
+
+input updateCustomers_InputType {
+  set: updateCustomers_Set_InputType!
+  where: updateCustomers_Where_InputType!
+}
+
+input updateCustomers_Set_InputType {
+  financial_details: AWSJSON
+  firm_id: Int
+  tax_applicable: Boolean
+}
+
+input updateCustomers_Where_InputType {
+  firm_id: Int!
+}
+
+input updateInvoiceDetails_InputType {
+  set: updateInvoiceDetails_Set_InputType!
+  where: updateInvoiceDetails_Where_InputType!
+}
+
+input updateInvoiceDetails_Set_InputType {
+  cost_center_id: String
+  currency_type: String
+  customer_id: String
+  draft: Boolean
+  due_date: AWSDateTime
+  duration_from: AWSDateTime
+  duration_to: AWSDateTime
+  exchange_currency_value: Float
+  gross_amount: Float
+  gross_outstanding_amount: Float
+  invoice_date: AWSDateTime
+  invoice_memo: String
+  invoice_number: String
+  invoice_type: String
+  net_amount: Float
+  pay_currency: String
+  s3_key: String
+  status: String
+  sub_company_id: Int
+  tax_breakup: String
+  tax_input_rcm_amount: Float
+  tax_output_rcm_amount: Float
+  tds_amount: Float
+  to_currency: String
+}
+
+input updateInvoiceDetails_Where_InputType {
+  id: Int!
+}
+
+input updateInvoiceItemDetails_InputType {
+  set: updateInvoiceItemDetails_Set_InputType!
+  where: updateInvoiceItemDetails_Where_InputType!
+}
+
+input updateInvoiceItemDetails_Set_InputType {
+  description: String
+  hsn_sac: String
+  invoice_id: Int
+  item_amount: Float
+  item_category_id: Int
+  item_quantity: Int
+  tax_percent: Float
+  tax_type: String
+}
+
+input updateInvoiceItemDetails_Where_InputType {
+  id: Int!
+}
+
+input updateInvoiceItemsCategory_InputType {
+  set: updateInvoiceItemsCategory_Set_InputType!
+  where: updateInvoiceItemsCategory_Where_InputType!
+}
+
+input updateInvoiceItemsCategory_Set_InputType {
+  category: String
+  class_type: String
+  name: String
+}
+
+input updateInvoiceItemsCategory_Where_InputType {
+  id: Int
+}
+
+input updateInvoicePaidDetails_InputType {
+  set: updateInvoicePaidDetails_Set_InputType!
+  where: updateInvoicePaidDetails_Where_InputType!
+}
+
+input updateInvoicePaidDetails_Set_InputType {
+  bank_account_id: Int
+  bank_charges_abroad_amount: Float
+  exchange_currency_value: Float
+  exchange_fluctuation_gain_loss: Float
+  invoice_id: Int
+  narration: String
+  paid_date_time: AWSDateTime
+  pay_currency: String
+  shortfall_realisation_amount: Float
+  to_currency: String
+}
+
+input updateInvoicePaidDetails_Where_InputType {
+  id: Int!
+}
+
+input updateMilestones_InputType {
+  set: updateMilestones_Set_InputType!
+  where: updateMilestones_Where_InputType!
+}
+
+input updateMilestones_Set_InputType {
+  due_date: AWSDateTime
+  from_date: AWSDateTime
+  name: String
+  project_id: String
+  sort_id: Int
+  to_date: AWSDateTime
+}
+
+input updateMilestones_Where_InputType {
+  project_id: String!
+}
+
+input updateRegion_InputType {
+  set: updateRegion_Set_InputType!
+  where: updateRegion_Where_InputType!
+}
+
+input updateRegion_Set_InputType {
+  address: String
+  country: String
+  currency_type: String
+  name: String
+  responsible_person_email: String
+  sales_tax: Float
+}
+
+input updateRegion_Where_InputType {
+  id: Int!
+}
+
+input updateTagList_InputType {
+  set: updateTagList_Set_InputType!
+  where: updateTagList_Where_InputType!
+}
+
+input updateTagList_Set_InputType {
+  invoice_type: String
+  title: String
+  type: String
+}
+
+input updateTagList_Where_InputType {
+  tag_id: Int!
+}
+
+input updateTaggedInfo_InputType {
+  set: updateTaggedInfo_Set_InputType!
+  where: updateTaggedInfo_Where_InputType!
+}
+
+input updateTaggedInfo_Set_InputType {
+  entity_id: Int
+  entity_type: String
+  tag_id: Int
+}
+
+input updateTaggedInfo_Where_InputType {
+  attach_id: Int!
+}
+
+input updateTaskRevenue_InputType {
+  set: updateTaskRevenue_Set_InputType!
+  where: updateTaskRevenue_Where_InputType!
+}
+
+input updateTaskRevenue_Set_InputType {
+  billed_from: AWSDateTime
+  billed_to: AWSDateTime
+  created_by: String
+  created_on: AWSDateTime
+  desc_attachment_key: String
+  description: String
+  exchange_rates_id: Int
+  inr_added_directly: Boolean
+  outsourcing_amount: Float
+  prod_hours_billed: String
+  prod_hours_unbilled: String
+  project_id: String
+  qc_hours_billed: String
+  qc_hours_unbilled: String
+  revenue_amount: Float
+  revenue_amount_inr: Float
+  task_ids_billed: String
+  task_ids_unbilled: String
+  updated_by: String
+  updated_on: AWSDateTime
+}
+
+input updateTaskRevenue_Where_InputType {
+  id: Int!
+}
+
+input updateVendors_InputType {
+  set: updateVendors_Set_InputType!
+  where: updateVendors_Where_InputType!
+}
+
+input updateVendors_Set_InputType {
+  address: String
+  bank_account_id: Int
+  country: String
+  email: String
+  financial_details: AWSJSON
+  name: String
+  phone: String
+  tax_applicable: Boolean
+}
+
+input updateVendors_Where_InputType {
+  id: Int!
 }
