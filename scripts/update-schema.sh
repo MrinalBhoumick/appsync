@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Check if AWS CLI is installed
 if ! command -v aws &> /dev/null; then
     echo "AWS CLI is not installed. Please install AWS CLI first."
@@ -25,12 +24,18 @@ if [[ ! -f ~/.aws/credentials ]]; then
     aws configure
 fi
 
-# Prompt the user to enter the AppSync API ID
-read -p "Enter your AppSync API ID: " API_ID
+# Fetch AppSync API ID from CodeBuild environment
+if [[ -z "$CODEBUILD_START_TIME" ]]; then
+    echo "This script must be run in an AWS CodeBuild environment."
+    exit 1
+fi
+
+# Set AppSync API ID from CodeBuild environment variable
+API_ID="$AWS_APPSYNC_API_ID"
 
 # Check if the API ID is not empty
 if [[ -z "$API_ID" ]]; then
-    echo "API ID cannot be empty."
+    echo "AppSync API ID is missing from the environment variables."
     exit 1
 fi
 
