@@ -31,7 +31,7 @@ if [[ -z "$CODEBUILD_START_TIME" ]]; then
 fi
 
 # Set AppSync API ID from CodeBuild environment variable
-API_ID="$AWS_APPSYNC_API_ID"
+API_ID="$API_ID"
 
 # Check if the API ID is not empty
 if [[ -z "$API_ID" ]]; then
