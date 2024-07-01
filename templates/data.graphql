@@ -25,6 +25,7 @@ input BankAccountListInput {
   beneficiary_name: String
   id: Int
   invoice_type: String
+  invoice_string: String
 }
 
 input BankListInput {
