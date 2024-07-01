@@ -1,8 +1,54 @@
-type AddBankInfoTableType {
-	address: String
-	branch_name: String
-	id: Int
-	ifsc: String
-	name: String
-	swift: String
+type Query {
+  getAddBankInfo(id: Int!): AddBankInfoTableType
+  getBankAccountList(id: Int!): BankAccountListTableType
+  getBankList(id: Int!): BankListTableType
+}
+
+type Mutation {
+  addBankInfo(input: AddBankInfoInput!): AddBankInfoTableType
+  updateBankAccountList(input: BankAccountListInput!): BankAccountListTableType
+  updateBankList(input: BankListInput!): BankListTableType
+}
+
+input AddBankInfoInput {
+  address: String
+  branch_name: String
+  id: Int
+  ifsc: String
+  name: String
+  swift: String
+}
+
+input BankAccountListInput {
+  account_no: String
+  bank_id: Int
+  beneficiary_name: String
+  id: Int
+  invoice_type: String
+}
+
+input BankListInput {
+  address: String
+  branch_name: String
+  id: Int
+  ifsc: String
+  name: String
+  swift: String
+}
+
+type BankAccountListTableType {
+  account_no: String
+  bank_id: Int
+  beneficiary_name: String
+  id: Int
+  invoice_type: String
+}
+
+type BankListTableType {
+  address: String
+  branch_name: String
+  id: Int
+  ifsc: String
+  name: String
+  swift: String
 }
