@@ -14,8 +14,8 @@ phases:
     commands:
       - echo "Starting schema update for AppSync API"
       - bash scripts/update-schema.sh
-      - sh scripts/update-request-mapping-template.sh
-      - sh scripts/update-response-mapping-template.sh
+      # - sh scripts/update-request-mapping-template.sh
+      # - sh scripts/update-response-mapping-template.sh
 
   post_build:
     commands:
