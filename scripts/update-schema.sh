@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Check if AWS CLI is installed
-if ! command -v aws &> /dev/null; then
-    echo "AWS CLI is not installed. Please install AWS CLI first."
-    exit 1
-fi
+# Check if AWS CLI and Python are installed
+command -v aws >/dev/null 2>&1 || { echo >&2 "AWS CLI is not installed. Aborting."; exit 1; }
+command -v python >/dev/null 2>&1 || { echo >&2 "Python is not installed. Aborting."; exit 1; }
 
+# Check if appsync-schema-uploader package is installed; install if necessary
+if ! python -m pip show appsync-schema-uploader >/dev/null 2>&1; then
+    echo "Installing appsync-schema-uploader..."
+    python -m pip install appsync-schema-uploader
+fi
 
 # Configure AWS CLI if not already configured
 if [[ ! -f ~/.aws/credentials ]]; then
@@ -19,7 +22,7 @@ if [[ -z "$API_ID" ]]; then
     exit 1
 fi
 
-API_ID="$API_ID"
+API_ID="$AWS_APPSYNC_API_ID"
 
 # Determine the path to the templates directory relative to the script's location
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
@@ -32,16 +35,8 @@ if [[ ! -s $SCHEMA_FILE ]]; then
     exit 1
 fi
 
-# Base64 encode the schema file
-SCHEMA_BASE64=$(base64 -w 0 "$SCHEMA_FILE")
-
-# Initiate schema update for the AppSync API using AWS CLI
+# Update the AppSync API schema using appsync-schema-uploader
 echo "Updating AppSync API schema..."
-aws appsync start-schema-creation \
-    --api-id "$API_ID" \
-    --definition "data:text/plain;base64,$SCHEMA_BASE64"
-
-# Optional: adjust sleep time as needed to ensure the schema creation process has time to start
-sleep 10
+python -m appsync_schema_uploader --api-id "$API_ID" --schema "$SCHEMA_FILE"
 
 echo "Schema update process completed."

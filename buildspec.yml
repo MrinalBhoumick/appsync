@@ -1,13 +1,19 @@
 version: 0.2
+
 phases:
   install:
+    runtime-versions:
+      python: 3.11
     commands:
       - apt-get update
-
+      - apt-get install -y awscli
+      - apt-get install -y python3-pip
+      - pip3 install --upgrade pip
   pre_build:
     commands:
-      - echo "Install AWS CLI and configure credentials..."
-      - apt-get install -y awscli
+      - echo "Install appsync-schema-uploader..."
+      - pip3 install appsync-schema-uploader
+
   build:
     commands:
       - echo "Starting schema update for AppSync API..."
