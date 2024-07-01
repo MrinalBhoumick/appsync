@@ -1,5 +1,4 @@
 version: 0.2
-
 phases:
   install:
     commands:
@@ -9,8 +8,6 @@ phases:
     commands:
       - echo "Install AWS CLI and configure credentials..."
       - apt-get install -y awscli
-      - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-      - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
   build:
     commands:
       - echo "Starting schema update for AppSync API..."
