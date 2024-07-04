@@ -1,0 +1,1123 @@
+---
+Description: AWSAppSync API Deloyment Test
+Parameters:
+  Bucketname:
+    Type: String
+    Default: "interface-invoice-data-storage-development"
+    Description: Enter the new S3 bucket name to be created
+
+  CloudWatchLogsRoleName:
+    Type: String
+    Default: "appsync-graphqlapi-logs-development"
+    Description: Enter the name of the new role to be created to forward logs to loggroup eg; appsync-graphqlapi-logs-eu-west-1
+
+  LambdaServiceRoleName:
+    Type: String
+    Default: "appsync-commercial_cost_center-development"
+    Description: Enter the name of the new role to be created to execute lambda eg; appsync-ds-lam-ptf2dk-commercial_cost_cent
+
+  LambdaFunctionArn:
+    Type: String
+    Default: "arn:aws:lambda:eu-central-1:576278039241:function:commercial_cost_center"
+    Description: Enter the existing Lambda function ARN to configure as DataSource in AppSync
+
+  LambdaAuthorizerARN:
+    Type: String
+    Default: "arn:aws:lambda:eu-central-1:576278039241:function:sharedLambdaAuthorizer:development"
+    Description: Enter the existing AWS Lambda for AppSync authentication
+
+  CloudFrontDescription:
+    Type: String
+    Default: "interface-invoice-data-storage-development"
+    Description: Enter the description for CloudFront distribution eg;interface-production-data-storage-id
+
+  # WAFWebACL:
+  #   Type: String
+  #   Default: "arn:aws:wafv2:us-east-1:576278039241:global/webacl/JnF-CF-WAF/56e71aa4-544c-4e3b-a32e-f6697c5b4fd1"
+  #   Description: "Enter the WAF ACL ARN ID, eg; arn:aws:wafv2:us-east-1:xxxxxx:global/webacl/samplewebaclname/60dar4-3ahd-4794-9282-6a2982uj92"
+
+  # TargetS3AccessLogBucket:
+  #   Type: String
+  #   Description: Enter the target bucket name to be created for S3 Server Access Logs
+
+  ExistingSecretARN:
+    Type: String
+    Default: "arn:aws:secretsmanager:eu-central-1:AccountID:secret:buildtwin-main-secrets-PgFWbn"
+    Description: "Enter the full ARN of existing secret manager."
+
+  S3LocationGraphqlSchema:
+    Type: String
+    Default: "s3://j-f-code-docs/Cloudformation/Appsync/templates/data.graphql"
+    Description: "Enter the full s3 uri path for the graphQL schema location"
+
+  requestMappingTemplateS3LocationInput:
+    Type: String
+    Default: "s3://j-f-code-docs/Cloudformation/Appsync/templates/request_mapping.graphql"
+
+  responseMappingTemplateS3LocationInputMutation:
+    Type: String
+    Default: "s3://j-f-code-docs/Cloudformation/Appsync/templates/response_mapping_mutation.graphql"
+
+  responseMappingTemplateS3LocationInputQuery:
+    Type: String
+    Default: "s3://j-f-code-docs/Cloudformation/Appsync/templates/response_mapping_query.graphql"
+
+Resources:
+  #AWS Service Role and Policy to execute Lambda from AppSync Data Source
+  LambdaServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Ref LambdaServiceRoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${LambdaServiceRoleName}-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:invokeFunction"
+                Resource:
+                  - !Ref LambdaFunctionArn
+                  - !Sub ${LambdaFunctionArn}:*
+
+  UpdateSecretFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          import os
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def lambda_handler(event, context):
+              try:
+                  # Get the AWS region dynamically from the context object
+                  region_name = context.invoked_function_arn.split(":")[3]
+
+                  secret_id = os.environ.get('SECRET_ID')
+                  if not secret_id:
+                      raise ValueError("SECRET_ID environment variable is not set")
+
+                  # Initialize AWS clients
+                  secrets_manager = boto3.client('secretsmanager', region_name=region_name)
+                  
+                  # Retrieve the current value of the secret
+                  get_secret_value_response = secrets_manager.get_secret_value(SecretId=secret_id)
+                  secret_value = json.loads(get_secret_value_response['SecretString'])
+                  
+                  # Update secret value
+                  secret_value.update({
+                      'commercialGraphql' : event['ResourceProperties'].get('commercialGraphql', '')
+                  })
+
+                  # Update the secret in Secrets Manager
+                  secrets_manager.update_secret(SecretId=secret_id, SecretString=json.dumps(secret_value))
+
+                  # Send success response to CloudFormation
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {
+                      "Message": "Secret updated successfully",
+                      "UpdatedSecretId": secret_id
+                  })
+              except Exception as e:
+                  logger.error("Error: %s", e, exc_info=True)
+                  # Send failure response to CloudFormation
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {
+                      "Error": str(e)
+                  })
+
+      Runtime: python3.12
+      Timeout: 300
+      Environment:
+        Variables:
+          SECRET_ID: !Sub ${ExistingSecretARN}
+
+  UpdateSecretCustomResource:
+    Type: "Custom::UpdateSecretCustomResource"
+    Properties:
+      ServiceToken: !GetAtt UpdateSecretFunction.Arn
+      commercialGraphql: !GetAtt GraphQLApi.GraphQLUrl
+    DependsOn:
+      - UpdateSecretFunction
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "SecretManagerLambdaPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:UpdateSecret"
+                Resource:
+                  - !Sub ${ExistingSecretARN}
+              - Effect: Allow
+                Action:
+                  - "rds:DescribeDBProxies"
+                Resource:
+                  - "*"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+  #AWS Service Role and Policy to forward logs to CloudWatch LogGroups from AppSync
+  CloudWatchServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Ref CloudWatchLogsRoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${CloudWatchLogsRoleName}-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+
+  #AWS AppSync API CreationLambda
+  GraphQLApi:
+    Type: "AWS::AppSync::GraphQLApi"
+    Properties:
+      Name: commercial_module_prod
+      AuthenticationType: "AWS_LAMBDA"
+      LambdaAuthorizerConfig:
+        AuthorizerUri: !Ref LambdaAuthorizerARN
+        # AuthorizerResultTtlInSeconds: 300
+      LogConfig:
+        CloudWatchLogsRoleArn: !GetAtt CloudWatchServiceRole.Arn
+        ExcludeVerboseContent: "false"
+        FieldLogLevel: "ALL"
+
+  #AppSync Custom Schema
+  AppSyncGraphQLSchema:
+    Type: "AWS::AppSync::GraphQLSchema"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      DefinitionS3Location: !Ref S3LocationGraphqlSchema
+  #AWS AppSync DataSource configuration with Lambda
+  AppSyncLambdaDataSource:
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      Name: LambdaDataSource
+      Description: Data Source Lambda Function for AppSync
+      Type: "AWS_LAMBDA"
+      ServiceRoleArn: !GetAtt LambdaServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !Ref LambdaFunctionArn
+
+  #Mutation and Query Resolvers attachment
+  getCostCenterResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCostCenter"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCostCenterAttachmentResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCostCenterAttachment"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getInvoiceDetailsResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getInvoiceDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getInvoiceNumberResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getInvoiceNumber"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCustomersResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCustomers"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCreatedInvoiceResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCreatedInvoice"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getMilestonesResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getMilestones"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getTaskRevenue:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getTaskRevenue"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getTaskRevenueIssueList:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getTaskRevenueIssueList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCostToCompanyResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCostToCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCompanyResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getRegionResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getRegion"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getInvoiceItemsCategoryResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getInvoiceItemsCategory"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCTCTimeLineCategoryResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCTCTimeLine"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCommercialMetricsResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCommercialMetrics"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getInvoiceItemDetailsResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getInvoiceItemDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getVendorsResolver:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getVendors"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getInvoicePaidDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getInvoicePaidDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getDashboardMetricsDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getDashboardMetrics"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getExchangeRatesDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getExchangeRates"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getTagListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getTagList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getTaggedInfoDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getTaggedInfo"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getBankAccountListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getBankAccountList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getBankListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getBankList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  getCurrencyListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Query"
+      FieldName: "getCurrencyList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputQuery
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCostCenterDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCostCenter"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCostCenterDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCostCenter"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCostCenterDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCostCenter"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addInvoiceDetailsDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addInvoiceDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateInvoiceDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateInvoiceDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteInvoiceDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteInvoiceDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addTaskRevenueDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addTaskRevenue"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCustomersDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCustomers"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCustomersDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCustomers"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCustomersDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCustomers"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCreatedInvoiceDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCreatedInvoice"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCreatedInvoiceDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCreatedInvoice"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCreatedInvoiceDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCreatedInvoice"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addMilestonesDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addMilestones"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateMilestonesDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateMilestones"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteMilestonesDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteMilestones"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCostToCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCostToCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCostToCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCostToCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCostToCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCostToCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateTaskRevenue:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateTaskRevenue"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCompanyDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCompany"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addRegionDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addRegion"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateRegionDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateRegion"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteRegionDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteRegion"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addInvoiceItemsCategoryDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addInvoiceItemsCategory"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateInvoiceItemsCategoryDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateInvoiceItemsCategory"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteInvoiceItemsCategoryDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteInvoiceItemsCategory"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addCTCTimeLineDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addCTCTimeLine"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateCTCTimeLineDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateCTCTimeLine"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteCTCTimeLineDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteCTCTimeLine"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addInvoiceItemDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addInvoiceItemDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateInvoiceItemDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateInvoiceItemDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteInvoiceItemDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteInvoiceItemDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addVendorsDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addVendors"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateVendorsDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateVendors"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteVendorsDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteVendors"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addInvoicePaidDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addInvoicePaidDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateInvoicePaidDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateInvoicePaidDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteInvoicePaidDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteInvoicePaidDetails"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addTagListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addTagList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateTagListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateTagList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteTagListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteTagList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addTaggedInfoDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addTaggedInfo"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateTaggedInfoDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateTaggedInfo"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteTaggedInfoDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteTaggedInfo"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteTaskRevenueDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteTaskRevenue"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addBankInfo:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addBankAccountList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  addBankAccountListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "addBankAccountList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  updateBankAccountListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "updateBankAccountList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  deleteBankAccountListDetails:
+    Type: "AWS::AppSync::Resolver"
+    Properties:
+      ApiId: !GetAtt GraphQLApi.ApiId
+      TypeName: "Mutation"
+      FieldName: "deleteBankAccountList"
+      RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
+      ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
+      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+
+  # HostedZone:
+  #   Type: AWS::Route53::HostedZone
+  #   Properties:
+  #     Name: !Ref DomainName
+
+  #AWS CloudFront OAI to allow access to S3 bucket origin
+  OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub ${AWS::StackName}-s3-origin-oai
+
+  #AWS New S3 bucket for CloudFront Origin
+  StaticResourcesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref Bucketname
+      VersioningConfiguration:
+        Status: Enabled
+      LoggingConfiguration:
+        DestinationBucketName: !Ref TargetS3AccessLogBucket
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - ETag
+  TargetS3AccessLogBucket:
+    Type: "AWS::S3::Bucket"
+    Properties: {}
+
+  StaticResourcesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticResourcesBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OriginAccessIdentity}
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::${StaticResourcesBucket}/*
+
+  #AWS CloudFront Distribution creation
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        # Aliases:
+        #   - !Ref DomainName
+        #   - !Sub www.${DomainName}
+        Origins:
+          - DomainName: !Sub ${StaticResourcesBucket}.s3.${AWS::Region}.amazonaws.com
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OriginAccessIdentity}
+        Enabled: true
+        HttpVersion: http2
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+        WebACLId: !Ref WAFWebACL
+        Comment: !Ref CloudFrontDescription
+
+Outputs:
+  GraphQLApiEndpoint:
+    Description: The URL for the GraphQL endpoint.
+    Value: !GetAtt GraphQLApi.GraphQLUrl
+  DistributionId:
+    Description: CloudFront Distribution Id
+    Value: !Ref Distribution
+    Export:
+      Name: !Sub ${AWS::StackName}-DistributionId
+  DistributionDomainName:
+    Description: CloudFront Distribution Domain Name
+    Value: !GetAtt Distribution.DomainName
+    Export:
+      Name: !Sub ${AWS::StackName}-DistributionDomainName
+  StaticResourcesBucketName:
+    Description: Static Resources Bucket Name
+    Value: !Ref StaticResourcesBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-StaticResourcesBucketName
