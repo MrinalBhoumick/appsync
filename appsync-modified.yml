@@ -975,12 +975,12 @@ Resources:
       ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
       DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
 
-  addBankInfo:
+  addBankInfoDetails:
     Type: "AWS::AppSync::Resolver"
     Properties:
       ApiId: !GetAtt GraphQLApi.ApiId
       TypeName: "Mutation"
-      FieldName: "addBankAccountList"
+      FieldName: "addBankInfo"
       RequestMappingTemplateS3Location: !Ref requestMappingTemplateS3LocationInput
       ResponseMappingTemplateS3Location: !Ref responseMappingTemplateS3LocationInputMutation
       DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
@@ -1099,7 +1099,6 @@ Resources:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
-        WebACLId: !Ref WAFWebACL
         Comment: !Ref CloudFrontDescription
 
 Outputs:
