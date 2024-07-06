@@ -3,16 +3,16 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.11
+      # python: 3.11
     commands:
-      - apt-get update
-      - apt-get install -y awscli
-      - apt-get install -y python3-pip
+      # - apt-get update
+      # - apt-get install -y awscli
+      # - apt-get install -y python3-pip
   pre_build:
     commands:
-      - echo "Install appsync-schema-uploader..."
-      - pip3 install appsync-schema-uploader
+      # - echo "Install appsync-schema-uploader..."
+      # - pip3 install appsync-schema-uploader
   build:
     commands:
-      - echo "Starting schema update for AppSync API..."
-      - sh scripts/update-schema.sh
+      # - echo "Starting schema update for AppSync API..."
+      # - sh scripts/update-schema.sh
