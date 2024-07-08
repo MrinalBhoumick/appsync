@@ -103,6 +103,9 @@ except requests.exceptions.RequestException as e:
     print(f"Response status code: {response.status_code}")
     print(f"Response content: {response.content}")
     exit(1)
+except Exception as e:
+    print(f"Unhandled exception: {e}")
+    exit(1)
 
 # Extract the fields from the introspection query result
 fields = []
