@@ -1,9 +1,7 @@
 import boto3
 import os
-import requests
 import time
-from requests_aws4auth import AWS4Auth
-import traceback
+import traceback  # Import traceback for detailed error messages
 
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
@@ -34,7 +32,7 @@ def start_schema_creation(api_id, schema_content):
         return response['status']
     except Exception as e:
         print(f"Failed to start schema creation: {e}")
-        traceback.print_exc()
+        traceback.print_exc()  # Print detailed traceback for debugging
         return None
 
 # Wait for schema creation to complete
@@ -88,7 +86,6 @@ def fetch_current_resolvers(api_id):
     except Exception as e:
         print(f"Failed to fetch resolvers: {e}")
         return None
-
 
 def get_service_role():
     try:
