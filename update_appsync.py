@@ -23,17 +23,15 @@ with open(schema_path, 'r') as schema_file:
     schema_content = schema_file.read()
 
 # Start the schema creation or update
-response = client.start_schema_creation(
-    apiId=API_ID,
-    definition=schema_content.encode('utf-8')
-)
-
-# Check if the schema update was successful
-if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+try:
+    response = client.start_schema_creation(
+        apiId=API_ID,
+        definition=schema_content.encode('utf-8')
+    )
+    response.raise_for_status()  # Raise an exception for HTTP errors
     print("Schema Updated successfully")
-else:
-    print("Schema Update failed")
-    print(response)
+except Exception as e:
+    print(f"Failed to update schema: {e}")
     exit(1)
 
 # Introspection query to fetch all types and fields
@@ -186,7 +184,4 @@ for type_name, field_name in fields:
                 api_id=API_ID,
                 type_name=type_name,
                 field_name=field_name,
-                request_mapping_template=request_mapping_template,
-                response_mapping_template=mutation_mapping_template,
-                service_role_arn=service_role_arn
-            )
+                request_mapping_template=request_mapping_temp
