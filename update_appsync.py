@@ -3,7 +3,6 @@ import os
 import requests
 import time
 from requests_aws4auth import AWS4Auth
-from graphql import parse
 
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
@@ -81,6 +80,26 @@ def fetch_current_resolvers(api_id):
         print(f"Failed to fetch resolvers: {e}")
         return None
 
+def get_service_role():
+    try:
+        # Create an IAM client
+        iam_client = boto3.client('iam')
+
+        # List roles with a specific path or tag (customize this as needed)
+        roles = iam_client.list_roles(PathPrefix='/service-role/')
+
+        # Find the role that matches your criteria (customize this as needed)
+        for role in roles['Roles']:
+            if 'service-role' in role['RoleName']:
+                return role['Arn']
+
+        # If no role matches, raise an exception or handle accordingly
+        raise Exception("Service role not found")
+    
+    except Exception as e:
+        print(f"Error fetching service role: {e}")
+        exit(1)
+
 # Function to compare local schema with current resolvers
 def compare_schemas(local_schema, current_resolvers):
     # Parse local schema to extract resolvers
@@ -99,16 +118,16 @@ def compare_schemas(local_schema, current_resolvers):
 # Function to parse resolvers from schema content
 def parse_resolvers(schema_content):
     resolvers = []
-    parsed_schema = parse(schema_content)
-    for definition in parsed_schema.definitions:
-        if definition.operation == 'query' or definition.operation == 'mutation':
-            for field in definition.selection_set.selections:
-                resolver = {
-                    'fieldName': field.name.value,
-                    'typeName': definition.name.value
-                }
-                resolvers.append(resolver)
-
+    lines = schema_content.splitlines()
+    current_type = None
+    for line in lines:
+        line = line.strip()
+        if line.startswith("type "):
+            current_type = line.split()[1]
+        elif line.startswith("  "):
+            if "(" in line:
+                field_name = line.split("(")[0].strip()
+                resolvers.append({'fieldName': field_name, 'typeName': current_type})
     return resolvers
 
 # Function to update resolver in AWS AppSync
@@ -196,7 +215,9 @@ if compare_schemas(schema_content, current_resolvers):
     print("No changes detected in resolvers. Skipping update.")
 else:
     # Update resolvers for all fields
-    for type_name, field_name in parse_resolvers(schema_content):
+    for resolver in parse_resolvers(schema_content):
+        type_name = resolver['typeName']
+        field_name = resolver['fieldName']
         if type_name in ['Query', 'Mutation']:
             if type_name == 'Query':
                 update_resolver(
