@@ -1,18 +1,38 @@
 version: 0.2
 
+env:
+  variables:
+    API_ID: "baqk365bi5hjbdogcptccb6ytq"
+    GITHUB_REPO_URL: "https://github.com/MrinalBhoumick/appsync.git"
+    API_NAME: "commercial_module_prod"
+    AUTHENTICATION_TYPE: "AWS_LAMBDA"
+
 phases:
   install:
     runtime-versions:
-      # python: 3.11
+      python: 3.11
     commands:
-      # - apt-get update
-      # - apt-get install -y awscli
-      # - apt-get install -y python3-pip
+      - pip install boto3 requests
+      - pip install requests-aws4auth
+      - apt-get update && apt-get install -y jq
+
   pre_build:
     commands:
-      # - echo "Install appsync-schema-uploader..."
-      # - pip3 install appsync-schema-uploader
+      # Assuming role
+      - ROLE_ARN="arn:aws:iam::058264356572:role/sts-appsync-role"
+      - CREDENTIALS=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name codebuild-session)
+      - export AWS_ACCESS_KEY_ID=$(echo $CREDENTIALS | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo $CREDENTIALS | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo $CREDENTIALS | jq -r '.Credentials.SessionToken')
+
+      # Configure Git to fetch the code from GitHub
+      - git clone $GITHUB_REPO_URL repo
+      - cd repo
+
   build:
     commands:
-      # - echo "Starting schema update for AppSync API..."
-      # - sh scripts/update-schema.sh
+      - python update_appsync.py
+
+artifacts:
+  files:
+    - "**/*"
