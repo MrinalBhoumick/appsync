@@ -4,17 +4,14 @@ env:
   variables:
     API_ID: "baqk365bi5hjbdogcptccb6ytq"
     GITHUB_REPO_URL: "https://github.com/MrinalBhoumick/appsync.git"
-    API_NAME: "commercial_module_prod"
-    AUTHENTICATION_TYPE: "AWS_LAMBDA"
-    API_URL: "https://acgdakvy7bdpphsb4h2r3h2ita.appsync-api.ap-south-1.amazonaws.com/graphql"
+    REGION: "ap-south-1"
 
 phases:
   install:
     runtime-versions:
       python: 3.11
     commands:
-      - pip install boto3 requests
-      - pip install requests-aws4auth
+      - pip install boto3
       - apt-get update && apt-get install -y jq
 
   pre_build:
