@@ -216,7 +216,7 @@ Resources:
   GraphQLApi:
     Type: "AWS::AppSync::GraphQLApi"
     Properties:
-      Name: commercial_module_prod
+      Name: buildtwin-commercial-module-prod
       AuthenticationType: "AWS_LAMBDA"
       LambdaAuthorizerConfig:
         AuthorizerUri: !Ref LambdaAuthorizerARN
