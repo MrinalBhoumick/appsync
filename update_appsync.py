@@ -19,6 +19,7 @@ client = boto3.client('appsync', region_name=REGION)
 schema_path = os.path.join('templates', 'data.graphql')
 query_mapping_path = os.path.join('templates', 'response_mapping_query.graphql')
 mutation_mapping_path = os.path.join('templates', 'response_mapping_mutation.graphql')
+request_mapping_path = os.path.join('templates', 'request_mapping.graphql')
 
 # Load the GraphQL schema
 with open(schema_path, 'r') as schema_file:
@@ -31,6 +32,10 @@ with open(query_mapping_path, 'r') as query_mapping_file:
 # Load the request and response mapping templates for mutations
 with open(mutation_mapping_path, 'r') as mutation_mapping_file:
     mutation_mapping_template = mutation_mapping_file.read()
+
+# Load the request mapping template
+with open(request_mapping_path, 'r') as request_mapping_file:
+    request_mapping_template = request_mapping_file.read()
 
 # Start the schema creation
 response = client.start_schema_creation(
@@ -62,7 +67,6 @@ credentials = session.get_credentials().get_frozen_credentials()
 
 auth = AWS4Auth(credentials.access_key, credentials.secret_key, REGION, 'appsync', session_token=credentials.token)
 
-
 headers = {
     'Content-Type': 'application/json'
 }
@@ -88,6 +92,7 @@ if 'data' in schema_data and '__schema' in schema_data['data']:
                 fields.append((type_data['name'], field['name']))
 
 print(fields)  # This will print all type and field name pairs
+
 def get_service_role():
     # Create an IAM client
     iam_client = boto3.client('iam')
