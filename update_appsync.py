@@ -28,8 +28,11 @@ try:
         apiId=API_ID,
         definition=schema_content.encode('utf-8')
     )
-    response.raise_for_status()  # Raise an exception for HTTP errors
-    print("Schema Updated successfully")
+    # Ensure schema creation started successfully
+    if 'status' in response and response['status'] == 'SUCCESS':
+        print("Schema Update process started successfully")
+    else:
+        raise Exception(f"Failed to start schema creation: {response}")
 except Exception as e:
     print(f"Failed to update schema: {e}")
     exit(1)
@@ -188,4 +191,3 @@ for type_name, field_name in fields:
                 response_mapping_template=mutation_mapping_template,
                 service_role_arn=service_role_arn
             )
-            
