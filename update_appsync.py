@@ -3,6 +3,7 @@ import os
 import requests
 import time
 from requests_aws4auth import AWS4Auth
+import traceback
 
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
@@ -33,6 +34,7 @@ def start_schema_creation(api_id, schema_content):
         return response['status']
     except Exception as e:
         print(f"Failed to start schema creation: {e}")
+        traceback.print_exc()
         return None
 
 # Wait for schema creation to complete
@@ -48,6 +50,7 @@ def wait_for_schema_creation(api_id):
                 break
             elif status == 'FAILED':
                 print("Schema creation failed")
+                print(f"Failure details: {response.get('details')}")
                 exit(1)
             print("Schema creation in progress. Waiting...")
             time.sleep(10)  # Wait for 10 seconds before retrying

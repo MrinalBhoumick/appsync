@@ -276,17 +276,6 @@ type TaskRevenueTableType {
 	updated_on: AWSDateTime
 }
 
-type VendorsTableType {
-	address: String
-	bank_account_id: Int
-	country: String
-	email: String
-	financial_details: AWSJSON
-	id: Int
-	name: String
-	phone: String
-	tax_applicable: Boolean
-}
 
 input addBankAccountList_InputType {
 	insert: addBankAccountList_Insert_InputType!
