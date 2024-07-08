@@ -1,6 +1,7 @@
 import boto3
 import os
 import requests
+import time
 from requests_aws4auth import AWS4Auth
 
 # Initialize environment variables
@@ -22,19 +23,42 @@ request_mapping_path = os.path.join('templates', 'request_mapping.graphql')
 with open(schema_path, 'r') as schema_file:
     schema_content = schema_file.read()
 
-# Start the schema creation or update
+# Function to start schema creation
+def start_schema_creation(api_id, schema_content):
+    try:
+        response = client.start_schema_creation(
+            apiId=api_id,
+            definition=schema_content.encode('utf-8')
+        )
+        return response
+    except Exception as e:
+        print(f"Failed to start schema creation: {e}")
+        return None
+
+# Retry until schema creation is done
+def wait_for_schema_creation(api_id):
+    while True:
+        response = client.list_schema_versions(
+            apiId=api_id,
+            format='SDL',
+            maxResults=1
+        )
+        if response['sdlSchemaVersions'][0]['status'] == 'AVAILABLE':
+            break
+        print("Schema creation in progress. Waiting...")
+        time.sleep(10)  # Wait for 10 seconds before retrying
+
+# Start schema creation
 try:
-    response = client.start_schema_creation(
-        apiId=API_ID,
-        definition=schema_content.encode('utf-8')
-    )
-    # Ensure schema creation started successfully
-    if 'status' in response and response['status'] == 'SUCCESS':
-        print("Schema Update process started successfully")
+    response = start_schema_creation(API_ID, schema_content)
+    if response and response.get('status') == 'PROCESSING':
+        wait_for_schema_creation(API_ID)
+        print("Schema creation completed successfully")
     else:
-        raise Exception(f"Failed to start schema creation: {response}")
+        print("Failed to start schema creation or schema creation status not PROCESSING")
+        exit(1)
 except Exception as e:
-    print(f"Failed to update schema: {e}")
+    print(f"Failed to start schema creation: {e}")
     exit(1)
 
 # Introspection query to fetch all types and fields
