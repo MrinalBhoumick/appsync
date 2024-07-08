@@ -184,4 +184,8 @@ for type_name, field_name in fields:
                 api_id=API_ID,
                 type_name=type_name,
                 field_name=field_name,
-                request_mapping_template=request_mapping_temp
+                request_mapping_template=request_mapping_template,
+                response_mapping_template=mutation_mapping_template,
+                service_role_arn=service_role_arn
+            )
+            
