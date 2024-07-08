@@ -92,6 +92,7 @@ auth = AWS4Auth(credentials.access_key, credentials.secret_key, REGION, 'appsync
 headers = {
     'Content-Type': 'application/json'
 }
+
 # Make the request to the API
 try:
     response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
