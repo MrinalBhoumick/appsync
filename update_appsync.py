@@ -72,10 +72,16 @@ headers = {
 }
 
 # Make the request to the API
+print(f"Making request to {API_URL} with query: {introspection_query}")
 response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
 
 # Check for HTTP errors
-response.raise_for_status()
+try:
+    response.raise_for_status()
+except requests.exceptions.HTTPError as e:
+    print(f"HTTP Error: {e}")
+    print(f"Response content: {response.content}")
+    raise
 
 # Parse the response as JSON
 schema_data = response.json()
