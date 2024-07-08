@@ -1,4 +1,3 @@
-
 type Mutation {
   addBankAccount(input: addBankAccountInput!): BankAccountListTableType
   addInvoice(input: addInvoiceInput!): CreatedInvoiceTableType
