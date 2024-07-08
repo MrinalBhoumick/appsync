@@ -33,6 +33,8 @@ if response['ResponseMetadata']['HTTPStatusCode'] == 200:
     print("Schema Updated successfully")
 else:
     print("Schema Update failed")
+    print(response)
+    exit(1)
 
 # Introspection query to fetch all types and fields
 introspection_query = {
@@ -61,16 +63,14 @@ headers = {
 }
 
 # Make the request to the API
-response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
-
-# Check for HTTP errors
-response.raise_for_status()
-
-# Parse the response as JSON
-schema_data = response.json()
-
-# Debugging: Print the entire response content
-print(schema_data)
+try:
+    response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
+    response.raise_for_status()
+    schema_data = response.json()
+except requests.exceptions.RequestException as e:
+    print(f"Error during introspection query: {e}")
+    print(f"Response content: {response.content}")
+    exit(1)
 
 # Extract the fields from the introspection query result
 fields = []
