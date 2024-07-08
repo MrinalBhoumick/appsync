@@ -67,18 +67,27 @@ headers = {
     'Content-Type': 'application/json'
 }
 
+# Make the request to the API
 response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
+
+# Check for HTTP errors
+response.raise_for_status()
+
+# Parse the response as JSON
 schema_data = response.json()
+
+# Debugging: Print the entire response content
+print(schema_data)
 
 # Extract the fields from the introspection query result
 fields = []
-for type_data in schema_data['data']['__schema']['types']:
-    if type_data['fields']:
-        for field in type_data['fields']:
-            fields.append((type_data['name'], field['name']))
+if 'data' in schema_data and '__schema' in schema_data['data']:
+    for type_data in schema_data['data']['__schema']['types']:
+        if 'fields' in type_data:
+            for field in type_data['fields']:
+                fields.append((type_data['name'], field['name']))
 
 print(fields)  # This will print all type and field name pairs
-
 def get_service_role():
     # Create an IAM client
     iam_client = boto3.client('iam')
