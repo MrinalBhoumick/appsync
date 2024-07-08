@@ -71,14 +71,21 @@ except Exception as e:
 def fetch_current_resolvers(api_id):
     resolvers = []
     paginator = client.get_paginator('list_resolvers')
+    
     try:
-        for page in paginator.paginate(apiId=api_id):
-            for resolver in page['resolvers']:
-                resolvers.append(resolver)
+        # Iterate through each type (Query, Mutation, etc.)
+        for type_name in ['Query', 'Mutation']:
+            # Paginate through resolvers for each type
+            for page in paginator.paginate(apiId=api_id, typeName=type_name):
+                for resolver in page['resolvers']:
+                    resolvers.append(resolver)
+                    
         return resolvers
+    
     except Exception as e:
         print(f"Failed to fetch resolvers: {e}")
         return None
+
 
 def get_service_role():
     try:
