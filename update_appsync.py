@@ -69,6 +69,7 @@ try:
     schema_data = response.json()
 except requests.exceptions.RequestException as e:
     print(f"Error during introspection query: {e}")
+    print(f"Response status code: {response.status_code}")
     print(f"Response content: {response.content}")
     exit(1)
 
