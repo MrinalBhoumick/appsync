@@ -30,30 +30,36 @@ def start_schema_creation(api_id, schema_content):
             apiId=api_id,
             definition=schema_content.encode('utf-8')
         )
-        return response
+        return response['status']
     except Exception as e:
         print(f"Failed to start schema creation: {e}")
         return None
 
-# Retry until schema creation is done
+# Wait for schema creation to complete
 def wait_for_schema_creation(api_id):
     while True:
-        response = client.list_schema_versions(
-            apiId=api_id,
-            format='SDL',
-            maxResults=1
-        )
-        if response['sdlSchemaVersions'][0]['status'] == 'AVAILABLE':
-            break
-        print("Schema creation in progress. Waiting...")
-        time.sleep(10)  # Wait for 10 seconds before retrying
+        try:
+            response = client.get_schema_creation_status(
+                apiId=api_id
+            )
+            status = response['status']
+            if status == 'SUCCESS':
+                print("Schema creation completed successfully")
+                break
+            elif status == 'FAILED':
+                print("Schema creation failed")
+                exit(1)
+            print("Schema creation in progress. Waiting...")
+            time.sleep(10)  # Wait for 10 seconds before retrying
+        except Exception as e:
+            print(f"Failed to get schema creation status: {e}")
+            exit(1)
 
 # Start schema creation
 try:
-    response = start_schema_creation(API_ID, schema_content)
-    if response and response.get('status') == 'PROCESSING':
+    status = start_schema_creation(API_ID, schema_content)
+    if status == 'PROCESSING':
         wait_for_schema_creation(API_ID)
-        print("Schema creation completed successfully")
     else:
         print("Failed to start schema creation or schema creation status not PROCESSING")
         exit(1)
