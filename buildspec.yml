@@ -6,6 +6,7 @@ env:
     GITHUB_REPO_URL: "https://github.com/MrinalBhoumick/appsync.git"
     API_NAME: "commercial_module_prod"
     AUTHENTICATION_TYPE: "AWS_LAMBDA"
+    API_URL: "https://acgdakvy7bdpphsb4h2r3h2ita.appsync-api.ap-south-1.amazonaws.com/graphql"
 
 phases:
   install:

@@ -10,6 +10,7 @@ API_NAME = os.getenv('API_NAME')
 AUTHENTICATION_TYPE = os.getenv('AUTHENTICATION_TYPE')
 LAMBDA_FUNCTION_ARN = os.getenv('LAMBDA_FUNCTION_ARN')
 REGION = os.getenv('REGION')
+API_URL = os.getenv('API_URL')
 
 # Initialize the AppSync client
 client = boto3.client('appsync', region_name=REGION)
@@ -61,7 +62,6 @@ credentials = session.get_credentials().get_frozen_credentials()
 
 auth = AWS4Auth(credentials.access_key, credentials.secret_key, REGION, 'appsync', session_token=credentials.token)
 
-API_URL = f'https://{API_ID}.appsync-api.{REGION}.amazonaws.com/graphql'
 
 headers = {
     'Content-Type': 'application/json'
