@@ -1,3 +1,18 @@
+type BankAccountListTableType {
+  account_no: String!
+  bank_id: Int!
+  beneficiary_name: String!
+  id: Int!
+  invoice_type: String!
+}
+
+type CreatedInvoiceTableType {
+  doc_items: AWSJSON!
+  doc_metadata: AWSJSON!
+  doc_pdf_url: String!
+  id: Int!
+}
+
 type Mutation {
   addBankAccount(input: addBankAccountInput!): BankAccountListTableType
   addInvoice(input: addInvoiceInput!): CreatedInvoiceTableType
