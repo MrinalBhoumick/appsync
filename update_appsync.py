@@ -67,7 +67,7 @@ except Exception as e:
     print(f"Failed to start schema creation: {e}")
     exit(1)
 
-# Introspection query to fetch all types and fields
+# Define the introspection query
 introspection_query = {
     'query': '''
     {
@@ -92,7 +92,6 @@ auth = AWS4Auth(credentials.access_key, credentials.secret_key, REGION, 'appsync
 headers = {
     'Content-Type': 'application/json'
 }
-
 # Make the request to the API
 try:
     response = requests.post(API_URL, json=introspection_query, headers=headers, auth=auth)
