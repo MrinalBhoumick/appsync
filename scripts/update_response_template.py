@@ -34,7 +34,7 @@ def update_resolver(api_id, type_name, field_name, response_mapping_template, se
             dataSourceName=data_source_name,
             responseMappingTemplate=response_mapping_template
         )
-        print(f'Successfully updated resolver for {type_name}.{field_name}')
+        print(f'Successfully updated resolver for {type_name}.{field_name}')  # <-- Print success message
     except client.exceptions.ResolverNotFoundException:
         print(f'Resolver for {type_name}.{field_name} not found. Creating a new one.')
         response = client.create_resolver(
@@ -44,7 +44,7 @@ def update_resolver(api_id, type_name, field_name, response_mapping_template, se
             dataSourceName=data_source_name,
             responseMappingTemplate=response_mapping_template
         )
-        print(f'Successfully created resolver for {type_name}.{field_name}')
+        print(f'Successfully created resolver for {type_name}.{field_name}')  # <-- Print success message
 
 # Function to fetch current resolvers from AWS AppSync
 def fetch_current_resolvers(api_id):
