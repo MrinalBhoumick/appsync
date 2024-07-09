@@ -10,4 +10,6 @@ phases:
 
   build:
     commands:
-      - python update_appsync.py
+      # - python scripts/update_schema.py
+      - python scripts/update_request_template.py
+      - python scripts/update_response_template.py
