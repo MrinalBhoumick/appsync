@@ -1,6 +1,8 @@
 import boto3
 import os
 
+print("Updating request template")
+
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
 REGION = os.getenv('REGION')
@@ -10,7 +12,7 @@ SERVICE_ROLE_ARN = os.getenv('SERVICE_ROLE_ARN')
 # Initialize the AppSync client
 client = boto3.client('appsync', region_name=REGION)
 
-# Define the path for request mapping templates
+# Define the request mapping template path
 request_mapping_path = os.path.join('templates', 'request_mapping.graphql')
 
 # Load the request mapping template

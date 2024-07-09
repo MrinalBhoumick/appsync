@@ -2,6 +2,8 @@ import boto3
 import os
 import time
 
+print("Updating schema")
+
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
 REGION = os.getenv('REGION')
@@ -9,7 +11,7 @@ REGION = os.getenv('REGION')
 # Initialize the AppSync client
 client = boto3.client('appsync', region_name=REGION)
 
-# Define the path for schema
+# Define the paths for schema
 schema_path = os.path.join('templates', 'data.graphql')
 
 # Load the GraphQL schema

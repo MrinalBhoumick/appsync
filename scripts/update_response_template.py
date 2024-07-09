@@ -1,6 +1,8 @@
 import boto3
 import os
 
+print("Updating response template")
+
 # Initialize environment variables
 API_ID = os.getenv('API_ID')
 REGION = os.getenv('REGION')
@@ -9,7 +11,7 @@ SERVICE_ROLE_ARN = os.getenv('SERVICE_ROLE_ARN')
 # Initialize the AppSync client
 client = boto3.client('appsync', region_name=REGION)
 
-# Define the paths for response mapping templates
+# Define the response mapping templates paths
 query_mapping_path = os.path.join('templates', 'response_mapping_query.graphql')
 mutation_mapping_path = os.path.join('templates', 'response_mapping_mutation.graphql')
 
@@ -95,18 +97,15 @@ for resolver in parse_resolvers(schema_content):
     type_name = resolver['typeName']
     field_name = resolver['fieldName']
     if type_name == 'Query':
-        update_resolver(
-            api_id=API_ID,
-            type_name=type_name,
-            field_name=field_name,
-            response_mapping_template=query_mapping_template,
-            service_role_arn=SERVICE_ROLE_ARN
-        )
+        response_mapping_template = query_mapping_template
     elif type_name == 'Mutation':
-        update_resolver(
-            api_id=API_ID,
-            type_name=type_name,
-            field_name=field_name,
-            response_mapping_template=mutation_mapping_template,
-            service_role_arn=SERVICE_ROLE_ARN
-        )
+        response_mapping_template = mutation_mapping_template
+    else:
+        continue
+    update_resolver(
+        api_id=API_ID,
+        type_name=type_name,
+        field_name=field_name,
+        response_mapping_template=response_mapping_template,
+        service_role_arn=SERVICE_ROLE_ARN
+    )
