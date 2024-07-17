@@ -8,7 +8,8 @@
       "headers": $util.toJson({"authorization":$context.request.headers.authorization}),
       "selectionList": $utils.toJson($context.info.selectionSetList),
       "requestContext": {
-      	"authorizer":$util.toJson($context.identity.resolverContext)
+      	"authorizer":$util.toJson($context.identity.resolverContext),
+        "authorizer":$null
       },
   }
 }
